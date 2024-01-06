@@ -21,6 +21,12 @@ func _start() {
 	run()
 }
 
+//export wasi:cli/run@0.2.0-rc-2023-12-05#run
+func __wasi_cli_run_run() uint32 {
+	_start()
+	return 0
+}
+
 // Read the command line arguments from WASI.
 // For example, they can be passed to a program with wasmtime like this:
 //
