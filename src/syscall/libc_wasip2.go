@@ -201,7 +201,7 @@ func writeStdout(fd int32, buf *byte, count uint, offset int64) int {
 //go:wasmimport wasi:cli/stdin@0.2.0-rc-2023-11-10 get-stdin
 func __wasi_cli_stdout_get_stdin() __wasi_io_streams_input_stream
 
-//go:wasmimport wasi:cli/stdout@0.2.0-rc-2023-11-10 get-stdout
+//go:wasmimport wasi:cli/stdout@0.2.0-rc-2023-12-05 get-stdout
 func __wasi_cli_stdout_get_stdout() __wasi_io_streams_output_stream
 
 //go:wasmimport wasi:cli/stderr@0.2.0-rc-2023-11-10 get-stderr
