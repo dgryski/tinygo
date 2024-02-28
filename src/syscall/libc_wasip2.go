@@ -255,7 +255,7 @@ func pread(fd int32, buf *byte, count uint, offset int64) int {
 		return -1
 	}
 
-	list := result.OK().V0
+	list := result.OK().F0
 	copy(unsafe.Slice(buf, count), list.Slice())
 
 	// TODO(dgryski): EOF bool is ignored?
@@ -684,7 +684,7 @@ func populatePreopens() {
 	dirs := preopens.GetDirectories().Slice()
 	preopens := make(map[string]types.Descriptor, len(dirs))
 	for _, tup := range dirs {
-		desc, path := tup.V0, tup.V1
+		desc, path := tup.F0, tup.F1 // TODO: add Tuple.Unwrap() method?
 		preopens[path] = desc
 		if path == "." {
 			wasiCWD = desc
