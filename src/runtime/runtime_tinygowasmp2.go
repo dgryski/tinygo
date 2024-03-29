@@ -3,12 +3,13 @@
 package runtime
 
 import (
+	exit "syscall/wasi/cli/v0.2.0/exit"
+	stdout "syscall/wasi/cli/v0.2.0/stdout"
+	monotonicclock "syscall/wasi/clocks/v0.2.0/monotonic-clock"
+	wallclock "syscall/wasi/clocks/v0.2.0/wall-clock"
+	random "syscall/wasi/random/v0.2.0/random"
+
 	"github.com/ydnar/wasm-tools-go/cm"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/exit"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/stdout"
-	monotonicclock "github.com/ydnar/wasm-tools-go/wasi/clocks/monotonic-clock"
-	wallclock "github.com/ydnar/wasm-tools-go/wasi/clocks/wall-clock"
-	"github.com/ydnar/wasm-tools-go/wasi/random/random"
 )
 
 const putcharBufferSize = 120

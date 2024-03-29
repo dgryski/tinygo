@@ -7,17 +7,18 @@ package syscall
 import (
 	"unsafe"
 
+	"syscall/wasi/cli/v0.2.0/environment"
+	"syscall/wasi/cli/v0.2.0/stderr"
+	"syscall/wasi/cli/v0.2.0/stdin"
+	"syscall/wasi/cli/v0.2.0/stdout"
+	wallclock "syscall/wasi/clocks/v0.2.0/wall-clock"
+	"syscall/wasi/filesystem/v0.2.0/preopens"
+	"syscall/wasi/filesystem/v0.2.0/types"
+	ioerror "syscall/wasi/io/v0.2.0/error"
+	"syscall/wasi/io/v0.2.0/streams"
+	"syscall/wasi/random/v0.2.0/random"
+
 	"github.com/ydnar/wasm-tools-go/cm"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/environment"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/stderr"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/stdin"
-	"github.com/ydnar/wasm-tools-go/wasi/cli/stdout"
-	wallclock "github.com/ydnar/wasm-tools-go/wasi/clocks/wall-clock"
-	"github.com/ydnar/wasm-tools-go/wasi/filesystem/preopens"
-	"github.com/ydnar/wasm-tools-go/wasi/filesystem/types"
-	ioerror "github.com/ydnar/wasm-tools-go/wasi/io/error"
-	"github.com/ydnar/wasm-tools-go/wasi/io/streams"
-	"github.com/ydnar/wasm-tools-go/wasi/random/random"
 )
 
 func goString(cstr *byte) string {

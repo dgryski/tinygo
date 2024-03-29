@@ -262,6 +262,7 @@ func pathsToOverride(goMinor int, needsSyscallPackage bool) map[string]bool {
 
 	if needsSyscallPackage {
 		paths["syscall/"] = true // include syscall/js
+		paths["syscall/wasi/"] = false
 	}
 	return paths
 }

@@ -5,8 +5,8 @@ package runtime
 import (
 	"unsafe"
 
-	"github.com/ydnar/wasm-tools-go/wasi/cli/environment"
-	monotonicclock "github.com/ydnar/wasm-tools-go/wasi/clocks/monotonic-clock"
+	"syscall/wasi/cli/v0.2.0/environment"
+	monotonicclock "syscall/wasi/clocks/v0.2.0/monotonic-clock"
 )
 
 type timeUnit int64
