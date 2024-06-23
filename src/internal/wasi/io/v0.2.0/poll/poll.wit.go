@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package poll represents the interface "wasi:io/poll@0.2.0".
+// Package poll represents the imported interface "wasi:io/poll@0.2.0".
 //
 // A poll API intended to let users wait for I/O events on multiple handles
 // at once.
@@ -12,27 +12,29 @@ import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// Pollable represents the resource "wasi:io/poll@0.2.0#pollable".
+// Pollable represents the imported resource "wasi:io/poll@0.2.0#pollable".
 //
 // `pollable` represents a single I/O event which may be ready, or not.
 //
 //	resource pollable
 type Pollable cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "pollable".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self Pollable) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_PollableResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:io/poll@0.2.0 [resource-drop]pollable
 //go:noescape
-func (self Pollable) wasmimport_ResourceDrop()
+func wasmimport_PollableResourceDrop(self0 uint32)
 
-// Block represents method "block".
+// Block represents the imported method "block".
 //
 // `block` returns immediately if the pollable is ready, and otherwise
 // blocks until ready.
@@ -44,14 +46,16 @@ func (self Pollable) wasmimport_ResourceDrop()
 //
 //go:nosplit
 func (self Pollable) Block() {
-	self.wasmimport_Block()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_PollableBlock((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:io/poll@0.2.0 [method]pollable.block
 //go:noescape
-func (self Pollable) wasmimport_Block()
+func wasmimport_PollableBlock(self0 uint32)
 
-// Ready represents method "ready".
+// Ready represents the imported method "ready".
 //
 // Return the readiness of a pollable. This function never blocks.
 //
@@ -60,15 +64,18 @@ func (self Pollable) wasmimport_Block()
 //	ready: func() -> bool
 //
 //go:nosplit
-func (self Pollable) Ready() bool {
-	return self.wasmimport_Ready()
+func (self Pollable) Ready() (result bool) {
+	self0 := cm.Reinterpret[uint32](self)
+	result0 := wasmimport_PollableReady((uint32)(self0))
+	result = cm.U32ToBool((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:io/poll@0.2.0 [method]pollable.ready
 //go:noescape
-func (self Pollable) wasmimport_Ready() bool
+func wasmimport_PollableReady(self0 uint32) (result0 uint32)
 
-// Poll represents function "wasi:io/poll@0.2.0#poll".
+// Poll represents the imported function "poll".
 //
 // Poll for completion on a set of pollables.
 //
@@ -92,12 +99,12 @@ func (self Pollable) wasmimport_Ready() bool
 //	poll: func(in: list<borrow<pollable>>) -> list<u32>
 //
 //go:nosplit
-func Poll(in cm.List[Pollable]) cm.List[uint32] {
-	var result cm.List[uint32]
-	wasmimport_Poll(in, &result)
-	return result
+func Poll(in cm.List[Pollable]) (result cm.List[uint32]) {
+	in0, in1 := cm.LowerList(in)
+	wasmimport_Poll((*Pollable)(in0), (uint32)(in1), &result)
+	return
 }
 
 //go:wasmimport wasi:io/poll@0.2.0 poll
 //go:noescape
-func wasmimport_Poll(in cm.List[Pollable], result *cm.List[uint32])
+func wasmimport_Poll(in0 *Pollable, in1 uint32, result *cm.List[uint32])

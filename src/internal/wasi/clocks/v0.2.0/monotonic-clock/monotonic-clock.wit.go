@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package monotonicclock represents the interface "wasi:clocks/monotonic-clock@0.2.0".
+// Package monotonicclock represents the imported interface "wasi:clocks/monotonic-clock@0.2.0".
 //
 // WASI Monotonic Clock is a clock API intended to let users measure elapsed
 // time.
@@ -17,17 +17,11 @@
 package monotonicclock
 
 import (
+	"github.com/ydnar/wasm-tools-go/cm"
 	"internal/wasi/io/v0.2.0/poll"
 )
 
-// Duration represents the type "wasi:clocks/monotonic-clock@0.2.0#duration".
-//
-// A duration of time, in nanoseconds.
-//
-//	type duration = u64
-type Duration uint64
-
-// Instant represents the type "wasi:clocks/monotonic-clock@0.2.0#instant".
+// Instant represents the u64 "wasi:clocks/monotonic-clock@0.2.0#instant".
 //
 // An instant in time, in nanoseconds. An instant is relative to an
 // unspecified initial value, and can only be compared to instances from
@@ -36,12 +30,14 @@ type Duration uint64
 //	type instant = u64
 type Instant uint64
 
-// Pollable represents the resource "wasi:io/poll@0.2.0#pollable".
+// Duration represents the u64 "wasi:clocks/monotonic-clock@0.2.0#duration".
 //
-// See [poll.Pollable] for more information.
-type Pollable = poll.Pollable
+// A duration of time, in nanoseconds.
+//
+//	type duration = u64
+type Duration uint64
 
-// Now represents function "wasi:clocks/monotonic-clock@0.2.0#now".
+// Now represents the imported function "now".
 //
 // Read the current value of the clock.
 //
@@ -51,15 +47,17 @@ type Pollable = poll.Pollable
 //	now: func() -> instant
 //
 //go:nosplit
-func Now() Instant {
-	return wasmimport_Now()
+func Now() (result Instant) {
+	result0 := wasmimport_Now()
+	result = (Instant)((uint64)(result0))
+	return
 }
 
 //go:wasmimport wasi:clocks/monotonic-clock@0.2.0 now
 //go:noescape
-func wasmimport_Now() Instant
+func wasmimport_Now() (result0 uint64)
 
-// Resolution represents function "wasi:clocks/monotonic-clock@0.2.0#resolution".
+// Resolution represents the imported function "resolution".
 //
 // Query the resolution of the clock. Returns the duration of time
 // corresponding to a clock tick.
@@ -67,15 +65,36 @@ func wasmimport_Now() Instant
 //	resolution: func() -> duration
 //
 //go:nosplit
-func Resolution() Duration {
-	return wasmimport_Resolution()
+func Resolution() (result Duration) {
+	result0 := wasmimport_Resolution()
+	result = (Duration)((uint64)(result0))
+	return
 }
 
 //go:wasmimport wasi:clocks/monotonic-clock@0.2.0 resolution
 //go:noescape
-func wasmimport_Resolution() Duration
+func wasmimport_Resolution() (result0 uint64)
 
-// SubscribeDuration represents function "wasi:clocks/monotonic-clock@0.2.0#subscribe-duration".
+// SubscribeInstant represents the imported function "subscribe-instant".
+//
+// Create a `pollable` which will resolve once the specified instant
+// occured.
+//
+//	subscribe-instant: func(when: instant) -> pollable
+//
+//go:nosplit
+func SubscribeInstant(when Instant) (result poll.Pollable) {
+	when0 := (uint64)(when)
+	result0 := wasmimport_SubscribeInstant((uint64)(when0))
+	result = cm.Reinterpret[poll.Pollable]((uint32)(result0))
+	return
+}
+
+//go:wasmimport wasi:clocks/monotonic-clock@0.2.0 subscribe-instant
+//go:noescape
+func wasmimport_SubscribeInstant(when0 uint64) (result0 uint32)
+
+// SubscribeDuration represents the imported function "subscribe-duration".
 //
 // Create a `pollable` which will resolve once the given duration has
 // elapsed, starting at the time at which this function was called.
@@ -84,26 +103,13 @@ func wasmimport_Resolution() Duration
 //	subscribe-duration: func(when: duration) -> pollable
 //
 //go:nosplit
-func SubscribeDuration(when Duration) Pollable {
-	return wasmimport_SubscribeDuration(when)
+func SubscribeDuration(when Duration) (result poll.Pollable) {
+	when0 := (uint64)(when)
+	result0 := wasmimport_SubscribeDuration((uint64)(when0))
+	result = cm.Reinterpret[poll.Pollable]((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:clocks/monotonic-clock@0.2.0 subscribe-duration
 //go:noescape
-func wasmimport_SubscribeDuration(when Duration) Pollable
-
-// SubscribeInstant represents function "wasi:clocks/monotonic-clock@0.2.0#subscribe-instant".
-//
-// Create a `pollable` which will resolve once the specified instant
-// occured.
-//
-//	subscribe-instant: func(when: instant) -> pollable
-//
-//go:nosplit
-func SubscribeInstant(when Instant) Pollable {
-	return wasmimport_SubscribeInstant(when)
-}
-
-//go:wasmimport wasi:clocks/monotonic-clock@0.2.0 subscribe-instant
-//go:noescape
-func wasmimport_SubscribeInstant(when Instant) Pollable
+func wasmimport_SubscribeDuration(when0 uint64) (result0 uint32)

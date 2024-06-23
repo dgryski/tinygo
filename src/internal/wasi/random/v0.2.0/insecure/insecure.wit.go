@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package insecure represents the interface "wasi:random/insecure@0.2.0".
+// Package insecure represents the imported interface "wasi:random/insecure@0.2.0".
 //
 // The insecure interface for insecure pseudo-random numbers.
 //
@@ -14,7 +14,7 @@ import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// GetInsecureRandomBytes represents function "wasi:random/insecure@0.2.0#get-insecure-random-bytes".
+// GetInsecureRandomBytes represents the imported function "get-insecure-random-bytes".
 //
 // Return `len` insecure pseudo-random bytes.
 //
@@ -28,17 +28,17 @@ import (
 //	get-insecure-random-bytes: func(len: u64) -> list<u8>
 //
 //go:nosplit
-func GetInsecureRandomBytes(len_ uint64) cm.List[uint8] {
-	var result cm.List[uint8]
-	wasmimport_GetInsecureRandomBytes(len_, &result)
-	return result
+func GetInsecureRandomBytes(len_ uint64) (result cm.List[uint8]) {
+	len0 := (uint64)(len_)
+	wasmimport_GetInsecureRandomBytes((uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:random/insecure@0.2.0 get-insecure-random-bytes
 //go:noescape
-func wasmimport_GetInsecureRandomBytes(len_ uint64, result *cm.List[uint8])
+func wasmimport_GetInsecureRandomBytes(len0 uint64, result *cm.List[uint8])
 
-// GetInsecureRandomU64 represents function "wasi:random/insecure@0.2.0#get-insecure-random-u64".
+// GetInsecureRandomU64 represents the imported function "get-insecure-random-u64".
 //
 // Return an insecure pseudo-random `u64` value.
 //
@@ -48,10 +48,12 @@ func wasmimport_GetInsecureRandomBytes(len_ uint64, result *cm.List[uint8])
 //	get-insecure-random-u64: func() -> u64
 //
 //go:nosplit
-func GetInsecureRandomU64() uint64 {
-	return wasmimport_GetInsecureRandomU64()
+func GetInsecureRandomU64() (result uint64) {
+	result0 := wasmimport_GetInsecureRandomU64()
+	result = (uint64)((uint64)(result0))
+	return
 }
 
 //go:wasmimport wasi:random/insecure@0.2.0 get-insecure-random-u64
 //go:noescape
-func wasmimport_GetInsecureRandomU64() uint64
+func wasmimport_GetInsecureRandomU64() (result0 uint64)

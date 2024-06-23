@@ -2,14 +2,14 @@
 
 //go:build !wasip1
 
-// Package exit represents the interface "wasi:cli/exit@0.2.0".
+// Package exit represents the imported interface "wasi:cli/exit@0.2.0".
 package exit
 
 import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// Exit represents function "wasi:cli/exit@0.2.0#exit".
+// Exit represents the imported function "exit".
 //
 // Exit the current instance and any linked instances.
 //
@@ -17,9 +17,11 @@ import (
 //
 //go:nosplit
 func Exit(status cm.Result) {
-	wasmimport_Exit(status)
+	status0 := cm.LowerResult(status)
+	wasmimport_Exit((uint32)(status0))
+	return
 }
 
 //go:wasmimport wasi:cli/exit@0.2.0 exit
 //go:noescape
-func wasmimport_Exit(status cm.Result)
+func wasmimport_Exit(status0 uint32)

@@ -2,12 +2,36 @@
 
 //go:build !wasip1
 
-// Package network represents the interface "wasi:sockets/network@0.2.0".
+// Package network represents the imported interface "wasi:sockets/network@0.2.0".
 package network
 
 import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
+
+// Network represents the imported resource "wasi:sockets/network@0.2.0#network".
+//
+// An opaque resource that represents access to (a subset of) the network.
+// This enables context-based security for networking.
+// There is no need for this to map 1:1 to a physical network interface.
+//
+//	resource network
+type Network cm.Resource
+
+// ResourceDrop represents the imported resource-drop for resource "network".
+//
+// Drops a resource handle.
+//
+//go:nosplit
+func (self Network) ResourceDrop() {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_NetworkResourceDrop((uint32)(self0))
+	return
+}
+
+//go:wasmimport wasi:sockets/network@0.2.0 [resource-drop]network
+//go:noescape
+func wasmimport_NetworkResourceDrop(self0 uint32)
 
 // ErrorCode represents the enum "wasi:sockets/network@0.2.0#error-code".
 //
@@ -135,6 +159,32 @@ const (
 	ErrorCodePermanentResolverFailure
 )
 
+// IPAddressFamily represents the enum "wasi:sockets/network@0.2.0#ip-address-family".
+//
+//	enum ip-address-family {
+//		ipv4,
+//		ipv6
+//	}
+type IPAddressFamily uint8
+
+const (
+	// Similar to `AF_INET` in POSIX.
+	IPAddressFamilyIPv4 IPAddressFamily = iota
+
+	// Similar to `AF_INET6` in POSIX.
+	IPAddressFamilyIPv6
+)
+
+// IPv4Address represents the tuple "wasi:sockets/network@0.2.0#ipv4-address".
+//
+//	type ipv4-address = tuple<u8, u8, u8, u8>
+type IPv4Address [4]uint8
+
+// IPv6Address represents the tuple "wasi:sockets/network@0.2.0#ipv6-address".
+//
+//	type ipv6-address = tuple<u16, u16, u16, u16, u16, u16, u16, u16>
+type IPv6Address [8]uint16
+
 // IPAddress represents the variant "wasi:sockets/network@0.2.0#ip-address".
 //
 //	variant ip-address {
@@ -163,21 +213,41 @@ func (self *IPAddress) IPv6() *IPv6Address {
 	return cm.Case[IPv6Address](self, 1)
 }
 
-// IPAddressFamily represents the enum "wasi:sockets/network@0.2.0#ip-address-family".
+// IPv4SocketAddress represents the record "wasi:sockets/network@0.2.0#ipv4-socket-address".
 //
-//	enum ip-address-family {
-//		ipv4,
-//		ipv6
+//	record ipv4-socket-address {
+//		port: u16,
+//		address: ipv4-address,
 //	}
-type IPAddressFamily uint8
+type IPv4SocketAddress struct {
+	// sin_port
+	Port uint16
 
-const (
-	// Similar to `AF_INET` in POSIX.
-	IPAddressFamilyIPv4 IPAddressFamily = iota
+	// sin_addr
+	Address IPv4Address
+}
 
-	// Similar to `AF_INET6` in POSIX.
-	IPAddressFamilyIPv6
-)
+// IPv6SocketAddress represents the record "wasi:sockets/network@0.2.0#ipv6-socket-address".
+//
+//	record ipv6-socket-address {
+//		port: u16,
+//		flow-info: u32,
+//		address: ipv6-address,
+//		scope-id: u32,
+//	}
+type IPv6SocketAddress struct {
+	// sin6_port
+	Port uint16
+
+	// sin6_flowinfo
+	FlowInfo uint32
+
+	// sin6_addr
+	Address IPv6Address
+
+	// sin6_scope_id
+	ScopeID uint32
+}
 
 // IPSocketAddress represents the variant "wasi:sockets/network@0.2.0#ip-socket-address".
 //
@@ -206,71 +276,3 @@ func IPSocketAddressIPv6(data IPv6SocketAddress) IPSocketAddress {
 func (self *IPSocketAddress) IPv6() *IPv6SocketAddress {
 	return cm.Case[IPv6SocketAddress](self, 1)
 }
-
-// IPv4Address represents the tuple "wasi:sockets/network@0.2.0#ipv4-address".
-//
-//	type ipv4-address = tuple<u8, u8, u8, u8>
-type IPv4Address [4]uint8
-
-// IPv4SocketAddress represents the record "wasi:sockets/network@0.2.0#ipv4-socket-address".
-//
-//	record ipv4-socket-address {
-//		port: u16,
-//		address: ipv4-address,
-//	}
-type IPv4SocketAddress struct {
-	// sin_port
-	Port uint16
-
-	// sin_addr
-	Address IPv4Address
-}
-
-// IPv6Address represents the tuple "wasi:sockets/network@0.2.0#ipv6-address".
-//
-//	type ipv6-address = tuple<u16, u16, u16, u16, u16, u16, u16, u16>
-type IPv6Address [8]uint16
-
-// IPv6SocketAddress represents the record "wasi:sockets/network@0.2.0#ipv6-socket-address".
-//
-//	record ipv6-socket-address {
-//		port: u16,
-//		flow-info: u32,
-//		address: ipv6-address,
-//		scope-id: u32,
-//	}
-type IPv6SocketAddress struct {
-	// sin6_port
-	Port uint16
-
-	// sin6_flowinfo
-	FlowInfo uint32
-
-	// sin6_addr
-	Address IPv6Address
-
-	// sin6_scope_id
-	ScopeID uint32
-}
-
-// Network represents the resource "wasi:sockets/network@0.2.0#network".
-//
-// An opaque resource that represents access to (a subset of) the network.
-// This enables context-based security for networking.
-// There is no need for this to map 1:1 to a physical network interface.
-//
-//	resource network
-type Network cm.Resource
-
-// ResourceDrop represents the Canonical ABI function "resource-drop".
-//
-// Drops a resource handle.
-//
-//go:nosplit
-func (self Network) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
-}
-
-//go:wasmimport wasi:sockets/network@0.2.0 [resource-drop]network
-//go:noescape
-func (self Network) wasmimport_ResourceDrop()

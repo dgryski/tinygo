@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package terminalstderr represents the interface "wasi:cli/terminal-stderr@0.2.0".
+// Package terminalstderr represents the imported interface "wasi:cli/terminal-stderr@0.2.0".
 //
 // An interface providing an optional `terminal-output` for stderr as a
 // link-time authority.
@@ -13,12 +13,7 @@ import (
 	terminaloutput "internal/wasi/cli/v0.2.0/terminal-output"
 )
 
-// TerminalOutput represents the resource "wasi:cli/terminal-output@0.2.0#terminal-output".
-//
-// See [terminaloutput.TerminalOutput] for more information.
-type TerminalOutput = terminaloutput.TerminalOutput
-
-// GetTerminalStderr represents function "wasi:cli/terminal-stderr@0.2.0#get-terminal-stderr".
+// GetTerminalStderr represents the imported function "get-terminal-stderr".
 //
 // If stderr is connected to a terminal, return a `terminal-output` handle
 // allowing further interaction with it.
@@ -26,12 +21,11 @@ type TerminalOutput = terminaloutput.TerminalOutput
 //	get-terminal-stderr: func() -> option<terminal-output>
 //
 //go:nosplit
-func GetTerminalStderr() cm.Option[TerminalOutput] {
-	var result cm.Option[TerminalOutput]
+func GetTerminalStderr() (result cm.Option[terminaloutput.TerminalOutput]) {
 	wasmimport_GetTerminalStderr(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:cli/terminal-stderr@0.2.0 get-terminal-stderr
 //go:noescape
-func wasmimport_GetTerminalStderr(result *cm.Option[TerminalOutput])
+func wasmimport_GetTerminalStderr(result *cm.Option[terminaloutput.TerminalOutput])

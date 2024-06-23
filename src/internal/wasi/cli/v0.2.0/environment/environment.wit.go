@@ -2,31 +2,14 @@
 
 //go:build !wasip1
 
-// Package environment represents the interface "wasi:cli/environment@0.2.0".
+// Package environment represents the imported interface "wasi:cli/environment@0.2.0".
 package environment
 
 import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// GetArguments represents function "wasi:cli/environment@0.2.0#get-arguments".
-//
-// Get the POSIX-style arguments to the program.
-//
-//	get-arguments: func() -> list<string>
-//
-//go:nosplit
-func GetArguments() cm.List[string] {
-	var result cm.List[string]
-	wasmimport_GetArguments(&result)
-	return result
-}
-
-//go:wasmimport wasi:cli/environment@0.2.0 get-arguments
-//go:noescape
-func wasmimport_GetArguments(result *cm.List[string])
-
-// GetEnvironment represents function "wasi:cli/environment@0.2.0#get-environment".
+// GetEnvironment represents the imported function "get-environment".
 //
 // Get the POSIX-style environment variables.
 //
@@ -40,17 +23,32 @@ func wasmimport_GetArguments(result *cm.List[string])
 //	get-environment: func() -> list<tuple<string, string>>
 //
 //go:nosplit
-func GetEnvironment() cm.List[[2]string] {
-	var result cm.List[[2]string]
+func GetEnvironment() (result cm.List[[2]string]) {
 	wasmimport_GetEnvironment(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:cli/environment@0.2.0 get-environment
 //go:noescape
 func wasmimport_GetEnvironment(result *cm.List[[2]string])
 
-// InitialCWD represents function "wasi:cli/environment@0.2.0#initial-cwd".
+// GetArguments represents the imported function "get-arguments".
+//
+// Get the POSIX-style arguments to the program.
+//
+//	get-arguments: func() -> list<string>
+//
+//go:nosplit
+func GetArguments() (result cm.List[string]) {
+	wasmimport_GetArguments(&result)
+	return
+}
+
+//go:wasmimport wasi:cli/environment@0.2.0 get-arguments
+//go:noescape
+func wasmimport_GetArguments(result *cm.List[string])
+
+// InitialCWD represents the imported function "initial-cwd".
 //
 // Return a path that programs should use as their initial current working
 // directory, interpreting `.` as shorthand for this.
@@ -58,10 +56,9 @@ func wasmimport_GetEnvironment(result *cm.List[[2]string])
 //	initial-cwd: func() -> option<string>
 //
 //go:nosplit
-func InitialCWD() cm.Option[string] {
-	var result cm.Option[string]
+func InitialCWD() (result cm.Option[string]) {
 	wasmimport_InitialCWD(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:cli/environment@0.2.0 initial-cwd

@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package terminalstdin represents the interface "wasi:cli/terminal-stdin@0.2.0".
+// Package terminalstdin represents the imported interface "wasi:cli/terminal-stdin@0.2.0".
 //
 // An interface providing an optional `terminal-input` for stdin as a
 // link-time authority.
@@ -13,12 +13,7 @@ import (
 	terminalinput "internal/wasi/cli/v0.2.0/terminal-input"
 )
 
-// TerminalInput represents the resource "wasi:cli/terminal-input@0.2.0#terminal-input".
-//
-// See [terminalinput.TerminalInput] for more information.
-type TerminalInput = terminalinput.TerminalInput
-
-// GetTerminalStdin represents function "wasi:cli/terminal-stdin@0.2.0#get-terminal-stdin".
+// GetTerminalStdin represents the imported function "get-terminal-stdin".
 //
 // If stdin is connected to a terminal, return a `terminal-input` handle
 // allowing further interaction with it.
@@ -26,12 +21,11 @@ type TerminalInput = terminalinput.TerminalInput
 //	get-terminal-stdin: func() -> option<terminal-input>
 //
 //go:nosplit
-func GetTerminalStdin() cm.Option[TerminalInput] {
-	var result cm.Option[TerminalInput]
+func GetTerminalStdin() (result cm.Option[terminalinput.TerminalInput]) {
 	wasmimport_GetTerminalStdin(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:cli/terminal-stdin@0.2.0 get-terminal-stdin
 //go:noescape
-func wasmimport_GetTerminalStdin(result *cm.Option[TerminalInput])
+func wasmimport_GetTerminalStdin(result *cm.Option[terminalinput.TerminalInput])

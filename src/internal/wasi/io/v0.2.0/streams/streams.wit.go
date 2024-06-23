@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package streams represents the interface "wasi:io/streams@0.2.0".
+// Package streams represents the imported interface "wasi:io/streams@0.2.0".
 //
 // WASI I/O is an I/O abstraction API which is currently focused on providing
 // stream types.
@@ -17,12 +17,46 @@ import (
 	"internal/wasi/io/v0.2.0/poll"
 )
 
-// Error represents the resource "wasi:io/error@0.2.0#error".
+// StreamError represents the imported variant "wasi:io/streams@0.2.0#stream-error".
 //
-// See [ioerror.Error] for more information.
-type Error = ioerror.Error
+// An error for input-stream and output-stream operations.
+//
+//	variant stream-error {
+//		last-operation-failed(error),
+//		closed,
+//	}
+type StreamError cm.Variant[uint8, ioerror.Error, ioerror.Error]
 
-// InputStream represents the resource "wasi:io/streams@0.2.0#input-stream".
+// StreamErrorLastOperationFailed returns a [StreamError] of case "last-operation-failed".
+//
+// The last operation (a write or flush) failed before completion.
+//
+// More information is available in the `error` payload.
+func StreamErrorLastOperationFailed(data ioerror.Error) StreamError {
+	return cm.New[StreamError](0, data)
+}
+
+// LastOperationFailed returns a non-nil *[ioerror.Error] if [StreamError] represents the variant case "last-operation-failed".
+func (self *StreamError) LastOperationFailed() *ioerror.Error {
+	return cm.Case[ioerror.Error](self, 0)
+}
+
+// StreamErrorClosed returns a [StreamError] of case "closed".
+//
+// The stream is closed: no more input will be accepted by the
+// stream. A closed output-stream will return this error on all
+// future operations.
+func StreamErrorClosed() StreamError {
+	var data struct{}
+	return cm.New[StreamError](1, data)
+}
+
+// Closed returns true if [StreamError] represents the variant case "closed".
+func (self *StreamError) Closed() bool {
+	return cm.Tag(self) == 1
+}
+
+// InputStream represents the imported resource "wasi:io/streams@0.2.0#input-stream".
 //
 // An input bytestream.
 //
@@ -36,20 +70,22 @@ type Error = ioerror.Error
 //	resource input-stream
 type InputStream cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "input-stream".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self InputStream) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_InputStreamResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [resource-drop]input-stream
 //go:noescape
-func (self InputStream) wasmimport_ResourceDrop()
+func wasmimport_InputStreamResourceDrop(self0 uint32)
 
-// BlockingRead represents method "blocking-read".
+// BlockingRead represents the imported method "blocking-read".
 //
 // Read bytes from a stream, after blocking until at least one byte can
 // be read. Except for blocking, behavior is identical to `read`.
@@ -57,17 +93,18 @@ func (self InputStream) wasmimport_ResourceDrop()
 //	blocking-read: func(len: u64) -> result<list<u8>, stream-error>
 //
 //go:nosplit
-func (self InputStream) BlockingRead(len_ uint64) cm.OKResult[cm.List[uint8], StreamError] {
-	var result cm.OKResult[cm.List[uint8], StreamError]
-	self.wasmimport_BlockingRead(len_, &result)
-	return result
+func (self InputStream) BlockingRead(len_ uint64) (result cm.OKResult[cm.List[uint8], StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_InputStreamBlockingRead((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]input-stream.blocking-read
 //go:noescape
-func (self InputStream) wasmimport_BlockingRead(len_ uint64, result *cm.OKResult[cm.List[uint8], StreamError])
+func wasmimport_InputStreamBlockingRead(self0 uint32, len0 uint64, result *cm.OKResult[cm.List[uint8], StreamError])
 
-// BlockingSkip represents method "blocking-skip".
+// BlockingSkip represents the imported method "blocking-skip".
 //
 // Skip bytes from a stream, after blocking until at least one byte
 // can be skipped. Except for blocking behavior, identical to `skip`.
@@ -75,17 +112,18 @@ func (self InputStream) wasmimport_BlockingRead(len_ uint64, result *cm.OKResult
 //	blocking-skip: func(len: u64) -> result<u64, stream-error>
 //
 //go:nosplit
-func (self InputStream) BlockingSkip(len_ uint64) cm.OKResult[uint64, StreamError] {
-	var result cm.OKResult[uint64, StreamError]
-	self.wasmimport_BlockingSkip(len_, &result)
-	return result
+func (self InputStream) BlockingSkip(len_ uint64) (result cm.OKResult[uint64, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_InputStreamBlockingSkip((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]input-stream.blocking-skip
 //go:noescape
-func (self InputStream) wasmimport_BlockingSkip(len_ uint64, result *cm.OKResult[uint64, StreamError])
+func wasmimport_InputStreamBlockingSkip(self0 uint32, len0 uint64, result *cm.OKResult[uint64, StreamError])
 
-// Read represents method "read".
+// Read represents the imported method "read".
 //
 // Perform a non-blocking read from the stream.
 //
@@ -117,17 +155,18 @@ func (self InputStream) wasmimport_BlockingSkip(len_ uint64, result *cm.OKResult
 //	read: func(len: u64) -> result<list<u8>, stream-error>
 //
 //go:nosplit
-func (self InputStream) Read(len_ uint64) cm.OKResult[cm.List[uint8], StreamError] {
-	var result cm.OKResult[cm.List[uint8], StreamError]
-	self.wasmimport_Read(len_, &result)
-	return result
+func (self InputStream) Read(len_ uint64) (result cm.OKResult[cm.List[uint8], StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_InputStreamRead((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]input-stream.read
 //go:noescape
-func (self InputStream) wasmimport_Read(len_ uint64, result *cm.OKResult[cm.List[uint8], StreamError])
+func wasmimport_InputStreamRead(self0 uint32, len0 uint64, result *cm.OKResult[cm.List[uint8], StreamError])
 
-// Skip represents method "skip".
+// Skip represents the imported method "skip".
 //
 // Skip bytes from a stream. Returns number of bytes skipped.
 //
@@ -137,17 +176,18 @@ func (self InputStream) wasmimport_Read(len_ uint64, result *cm.OKResult[cm.List
 //	skip: func(len: u64) -> result<u64, stream-error>
 //
 //go:nosplit
-func (self InputStream) Skip(len_ uint64) cm.OKResult[uint64, StreamError] {
-	var result cm.OKResult[uint64, StreamError]
-	self.wasmimport_Skip(len_, &result)
-	return result
+func (self InputStream) Skip(len_ uint64) (result cm.OKResult[uint64, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_InputStreamSkip((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]input-stream.skip
 //go:noescape
-func (self InputStream) wasmimport_Skip(len_ uint64, result *cm.OKResult[uint64, StreamError])
+func wasmimport_InputStreamSkip(self0 uint32, len0 uint64, result *cm.OKResult[uint64, StreamError])
 
-// Subscribe represents method "subscribe".
+// Subscribe represents the imported method "subscribe".
 //
 // Create a `pollable` which will resolve once either the specified stream
 // has bytes available to read or the other end of the stream has been
@@ -159,15 +199,18 @@ func (self InputStream) wasmimport_Skip(len_ uint64, result *cm.OKResult[uint64,
 //	subscribe: func() -> pollable
 //
 //go:nosplit
-func (self InputStream) Subscribe() Pollable {
-	return self.wasmimport_Subscribe()
+func (self InputStream) Subscribe() (result poll.Pollable) {
+	self0 := cm.Reinterpret[uint32](self)
+	result0 := wasmimport_InputStreamSubscribe((uint32)(self0))
+	result = cm.Reinterpret[poll.Pollable]((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]input-stream.subscribe
 //go:noescape
-func (self InputStream) wasmimport_Subscribe() Pollable
+func wasmimport_InputStreamSubscribe(self0 uint32) (result0 uint32)
 
-// OutputStream represents the resource "wasi:io/streams@0.2.0#output-stream".
+// OutputStream represents the imported resource "wasi:io/streams@0.2.0#output-stream".
 //
 // An output bytestream.
 //
@@ -181,20 +224,22 @@ func (self InputStream) wasmimport_Subscribe() Pollable
 //	resource output-stream
 type OutputStream cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "output-stream".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self OutputStream) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_OutputStreamResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [resource-drop]output-stream
 //go:noescape
-func (self OutputStream) wasmimport_ResourceDrop()
+func wasmimport_OutputStreamResourceDrop(self0 uint32)
 
-// BlockingFlush represents method "blocking-flush".
+// BlockingFlush represents the imported method "blocking-flush".
 //
 // Request to flush buffered output, and block until flush completes
 // and stream is ready for writing again.
@@ -202,17 +247,17 @@ func (self OutputStream) wasmimport_ResourceDrop()
 //	blocking-flush: func() -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) BlockingFlush() cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_BlockingFlush(&result)
-	return result
+func (self OutputStream) BlockingFlush() (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_OutputStreamBlockingFlush((uint32)(self0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.blocking-flush
 //go:noescape
-func (self OutputStream) wasmimport_BlockingFlush(result *cm.ErrResult[struct{}, StreamError])
+func wasmimport_OutputStreamBlockingFlush(self0 uint32, result *cm.ErrResult[struct{}, StreamError])
 
-// BlockingSplice represents method "blocking-splice".
+// BlockingSplice represents the imported method "blocking-splice".
 //
 // Read from one stream and write to another, with blocking.
 //
@@ -223,17 +268,19 @@ func (self OutputStream) wasmimport_BlockingFlush(result *cm.ErrResult[struct{},
 //	blocking-splice: func(src: borrow<input-stream>, len: u64) -> result<u64, stream-error>
 //
 //go:nosplit
-func (self OutputStream) BlockingSplice(src InputStream, len_ uint64) cm.OKResult[uint64, StreamError] {
-	var result cm.OKResult[uint64, StreamError]
-	self.wasmimport_BlockingSplice(src, len_, &result)
-	return result
+func (self OutputStream) BlockingSplice(src InputStream, len_ uint64) (result cm.OKResult[uint64, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	src0 := cm.Reinterpret[uint32](src)
+	len0 := (uint64)(len_)
+	wasmimport_OutputStreamBlockingSplice((uint32)(self0), (uint32)(src0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.blocking-splice
 //go:noescape
-func (self OutputStream) wasmimport_BlockingSplice(src InputStream, len_ uint64, result *cm.OKResult[uint64, StreamError])
+func wasmimport_OutputStreamBlockingSplice(self0 uint32, src0 uint32, len0 uint64, result *cm.OKResult[uint64, StreamError])
 
-// BlockingWriteAndFlush represents method "blocking-write-and-flush".
+// BlockingWriteAndFlush represents the imported method "blocking-write-and-flush".
 //
 // Perform a write of up to 4096 bytes, and then flush the stream. Block
 // until all of these operations are complete, or an error occurs.
@@ -261,17 +308,18 @@ func (self OutputStream) wasmimport_BlockingSplice(src InputStream, len_ uint64,
 //	blocking-write-and-flush: func(contents: list<u8>) -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) BlockingWriteAndFlush(contents cm.List[uint8]) cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_BlockingWriteAndFlush(contents, &result)
-	return result
+func (self OutputStream) BlockingWriteAndFlush(contents cm.List[uint8]) (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	contents0, contents1 := cm.LowerList(contents)
+	wasmimport_OutputStreamBlockingWriteAndFlush((uint32)(self0), (*uint8)(contents0), (uint32)(contents1), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.blocking-write-and-flush
 //go:noescape
-func (self OutputStream) wasmimport_BlockingWriteAndFlush(contents cm.List[uint8], result *cm.ErrResult[struct{}, StreamError])
+func wasmimport_OutputStreamBlockingWriteAndFlush(self0 uint32, contents0 *uint8, contents1 uint32, result *cm.ErrResult[struct{}, StreamError])
 
-// BlockingWriteZeroesAndFlush represents method "blocking-write-zeroes-and-flush".
+// BlockingWriteZeroesAndFlush represents the imported method "blocking-write-zeroes-and-flush".
 //
 // Perform a write of up to 4096 zeroes, and then flush the stream.
 // Block until all of these operations are complete, or an error
@@ -299,17 +347,18 @@ func (self OutputStream) wasmimport_BlockingWriteAndFlush(contents cm.List[uint8
 //	blocking-write-zeroes-and-flush: func(len: u64) -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) BlockingWriteZeroesAndFlush(len_ uint64) cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_BlockingWriteZeroesAndFlush(len_, &result)
-	return result
+func (self OutputStream) BlockingWriteZeroesAndFlush(len_ uint64) (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_OutputStreamBlockingWriteZeroesAndFlush((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.blocking-write-zeroes-and-flush
 //go:noescape
-func (self OutputStream) wasmimport_BlockingWriteZeroesAndFlush(len_ uint64, result *cm.ErrResult[struct{}, StreamError])
+func wasmimport_OutputStreamBlockingWriteZeroesAndFlush(self0 uint32, len0 uint64, result *cm.ErrResult[struct{}, StreamError])
 
-// CheckWrite represents method "check-write".
+// CheckWrite represents the imported method "check-write".
 //
 // Check readiness for writing. This function never blocks.
 //
@@ -324,17 +373,17 @@ func (self OutputStream) wasmimport_BlockingWriteZeroesAndFlush(len_ uint64, res
 //	check-write: func() -> result<u64, stream-error>
 //
 //go:nosplit
-func (self OutputStream) CheckWrite() cm.OKResult[uint64, StreamError] {
-	var result cm.OKResult[uint64, StreamError]
-	self.wasmimport_CheckWrite(&result)
-	return result
+func (self OutputStream) CheckWrite() (result cm.OKResult[uint64, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_OutputStreamCheckWrite((uint32)(self0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.check-write
 //go:noescape
-func (self OutputStream) wasmimport_CheckWrite(result *cm.OKResult[uint64, StreamError])
+func wasmimport_OutputStreamCheckWrite(self0 uint32, result *cm.OKResult[uint64, StreamError])
 
-// Flush represents method "flush".
+// Flush represents the imported method "flush".
 //
 // Request to flush buffered output. This function never blocks.
 //
@@ -350,17 +399,17 @@ func (self OutputStream) wasmimport_CheckWrite(result *cm.OKResult[uint64, Strea
 //	flush: func() -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) Flush() cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_Flush(&result)
-	return result
+func (self OutputStream) Flush() (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_OutputStreamFlush((uint32)(self0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.flush
 //go:noescape
-func (self OutputStream) wasmimport_Flush(result *cm.ErrResult[struct{}, StreamError])
+func wasmimport_OutputStreamFlush(self0 uint32, result *cm.ErrResult[struct{}, StreamError])
 
-// Splice represents method "splice".
+// Splice represents the imported method "splice".
 //
 // Read from one stream and write to another.
 //
@@ -379,17 +428,19 @@ func (self OutputStream) wasmimport_Flush(result *cm.ErrResult[struct{}, StreamE
 //	splice: func(src: borrow<input-stream>, len: u64) -> result<u64, stream-error>
 //
 //go:nosplit
-func (self OutputStream) Splice(src InputStream, len_ uint64) cm.OKResult[uint64, StreamError] {
-	var result cm.OKResult[uint64, StreamError]
-	self.wasmimport_Splice(src, len_, &result)
-	return result
+func (self OutputStream) Splice(src InputStream, len_ uint64) (result cm.OKResult[uint64, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	src0 := cm.Reinterpret[uint32](src)
+	len0 := (uint64)(len_)
+	wasmimport_OutputStreamSplice((uint32)(self0), (uint32)(src0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.splice
 //go:noescape
-func (self OutputStream) wasmimport_Splice(src InputStream, len_ uint64, result *cm.OKResult[uint64, StreamError])
+func wasmimport_OutputStreamSplice(self0 uint32, src0 uint32, len0 uint64, result *cm.OKResult[uint64, StreamError])
 
-// Subscribe represents method "subscribe".
+// Subscribe represents the imported method "subscribe".
 //
 // Create a `pollable` which will resolve once the output-stream
 // is ready for more writing, or an error has occured. When this
@@ -405,15 +456,18 @@ func (self OutputStream) wasmimport_Splice(src InputStream, len_ uint64, result 
 //	subscribe: func() -> pollable
 //
 //go:nosplit
-func (self OutputStream) Subscribe() Pollable {
-	return self.wasmimport_Subscribe()
+func (self OutputStream) Subscribe() (result poll.Pollable) {
+	self0 := cm.Reinterpret[uint32](self)
+	result0 := wasmimport_OutputStreamSubscribe((uint32)(self0))
+	result = cm.Reinterpret[poll.Pollable]((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.subscribe
 //go:noescape
-func (self OutputStream) wasmimport_Subscribe() Pollable
+func wasmimport_OutputStreamSubscribe(self0 uint32) (result0 uint32)
 
-// Write represents method "write".
+// Write represents the imported method "write".
 //
 // Perform a write. This function never blocks.
 //
@@ -432,17 +486,18 @@ func (self OutputStream) wasmimport_Subscribe() Pollable
 //	write: func(contents: list<u8>) -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) Write(contents cm.List[uint8]) cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_Write(contents, &result)
-	return result
+func (self OutputStream) Write(contents cm.List[uint8]) (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	contents0, contents1 := cm.LowerList(contents)
+	wasmimport_OutputStreamWrite((uint32)(self0), (*uint8)(contents0), (uint32)(contents1), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.write
 //go:noescape
-func (self OutputStream) wasmimport_Write(contents cm.List[uint8], result *cm.ErrResult[struct{}, StreamError])
+func wasmimport_OutputStreamWrite(self0 uint32, contents0 *uint8, contents1 uint32, result *cm.ErrResult[struct{}, StreamError])
 
-// WriteZeroes represents method "write-zeroes".
+// WriteZeroes represents the imported method "write-zeroes".
 //
 // Write zeroes to a stream.
 //
@@ -454,56 +509,13 @@ func (self OutputStream) wasmimport_Write(contents cm.List[uint8], result *cm.Er
 //	write-zeroes: func(len: u64) -> result<_, stream-error>
 //
 //go:nosplit
-func (self OutputStream) WriteZeroes(len_ uint64) cm.ErrResult[struct{}, StreamError] {
-	var result cm.ErrResult[struct{}, StreamError]
-	self.wasmimport_WriteZeroes(len_, &result)
-	return result
+func (self OutputStream) WriteZeroes(len_ uint64) (result cm.ErrResult[struct{}, StreamError]) {
+	self0 := cm.Reinterpret[uint32](self)
+	len0 := (uint64)(len_)
+	wasmimport_OutputStreamWriteZeroes((uint32)(self0), (uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/streams@0.2.0 [method]output-stream.write-zeroes
 //go:noescape
-func (self OutputStream) wasmimport_WriteZeroes(len_ uint64, result *cm.ErrResult[struct{}, StreamError])
-
-// Pollable represents the resource "wasi:io/poll@0.2.0#pollable".
-//
-// See [poll.Pollable] for more information.
-type Pollable = poll.Pollable
-
-// StreamError represents the variant "wasi:io/streams@0.2.0#stream-error".
-//
-// An error for input-stream and output-stream operations.
-//
-//	variant stream-error {
-//		last-operation-failed(error),
-//		closed,
-//	}
-type StreamError cm.Variant[uint8, Error, Error]
-
-// StreamErrorLastOperationFailed returns a [StreamError] of case "last-operation-failed".
-//
-// The last operation (a write or flush) failed before completion.
-//
-// More information is available in the `error` payload.
-func StreamErrorLastOperationFailed(data Error) StreamError {
-	return cm.New[StreamError](0, data)
-}
-
-// LastOperationFailed returns a non-nil *[Error] if [StreamError] represents the variant case "last-operation-failed".
-func (self *StreamError) LastOperationFailed() *Error {
-	return cm.Case[Error](self, 0)
-}
-
-// StreamErrorClosed returns a [StreamError] of case "closed".
-//
-// The stream is closed: no more input will be accepted by the
-// stream. A closed output-stream will return this error on all
-// future operations.
-func StreamErrorClosed() StreamError {
-	var data struct{}
-	return cm.New[StreamError](1, data)
-}
-
-// Closed returns true if [StreamError] represents the variant case "closed".
-func (self *StreamError) Closed() bool {
-	return cm.Tag(self) == 1
-}
+func wasmimport_OutputStreamWriteZeroes(self0 uint32, len0 uint64, result *cm.ErrResult[struct{}, StreamError])

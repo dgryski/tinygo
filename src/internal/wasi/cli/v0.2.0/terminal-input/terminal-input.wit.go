@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package terminalinput represents the interface "wasi:cli/terminal-input@0.2.0".
+// Package terminalinput represents the imported interface "wasi:cli/terminal-input@0.2.0".
 //
 // Terminal input.
 //
@@ -15,22 +15,24 @@ import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// TerminalInput represents the resource "wasi:cli/terminal-input@0.2.0#terminal-input".
+// TerminalInput represents the imported resource "wasi:cli/terminal-input@0.2.0#terminal-input".
 //
 // The input side of a terminal.
 //
 //	resource terminal-input
 type TerminalInput cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "terminal-input".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self TerminalInput) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_TerminalInputResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:cli/terminal-input@0.2.0 [resource-drop]terminal-input
 //go:noescape
-func (self TerminalInput) wasmimport_ResourceDrop()
+func wasmimport_TerminalInputResourceDrop(self0 uint32)

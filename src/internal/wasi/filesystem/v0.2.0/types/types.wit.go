@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package types represents the interface "wasi:filesystem/types@0.2.0".
+// Package types represents the imported interface "wasi:filesystem/types@0.2.0".
 //
 // WASI filesystem is a filesystem API primarily intended to let users run WASI
 // programs that access their files on their existing filesystems, without
@@ -37,698 +37,57 @@ import (
 	"internal/wasi/io/v0.2.0/streams"
 )
 
-// Advice represents the enum "wasi:filesystem/types@0.2.0#advice".
+// FileSize represents the u64 "wasi:filesystem/types@0.2.0#filesize".
 //
-// File or memory access pattern advisory information.
+// File size or length of a region within a file.
 //
-//	enum advice {
-//		normal,
-//		sequential,
-//		random,
-//		will-need,
-//		dont-need,
-//		no-reuse
+//	type filesize = u64
+type FileSize uint64
+
+// DescriptorType represents the enum "wasi:filesystem/types@0.2.0#descriptor-type".
+//
+// The type of a filesystem object referenced by a descriptor.
+//
+// Note: This was called `filetype` in earlier versions of WASI.
+//
+//	enum descriptor-type {
+//		unknown,
+//		block-device,
+//		character-device,
+//		directory,
+//		fifo,
+//		symbolic-link,
+//		regular-file,
+//		socket
 //	}
-type Advice uint8
+type DescriptorType uint8
 
 const (
-	// The application has no advice to give on its behavior with respect
-	// to the specified data.
-	AdviceNormal Advice = iota
+	// The type of the descriptor or file is unknown or is different from
+	// any of the other types specified.
+	DescriptorTypeUnknown DescriptorType = iota
 
-	// The application expects to access the specified data sequentially
-	// from lower offsets to higher offsets.
-	AdviceSequential
+	// The descriptor refers to a block device inode.
+	DescriptorTypeBlockDevice
 
-	// The application expects to access the specified data in a random
-	// order.
-	AdviceRandom
+	// The descriptor refers to a character device inode.
+	DescriptorTypeCharacterDevice
 
-	// The application expects to access the specified data in the near
-	// future.
-	AdviceWillNeed
+	// The descriptor refers to a directory inode.
+	DescriptorTypeDirectory
 
-	// The application expects that it will not access the specified data
-	// in the near future.
-	AdviceDontNeed
+	// The descriptor refers to a named pipe.
+	DescriptorTypeFIFO
 
-	// The application expects to access the specified data once and then
-	// not reuse it thereafter.
-	AdviceNoReuse
+	// The file refers to a symbolic link inode.
+	DescriptorTypeSymbolicLink
+
+	// The descriptor refers to a regular file inode.
+	DescriptorTypeRegularFile
+
+	// The descriptor refers to a socket.
+	DescriptorTypeSocket
 )
-
-// DateTime represents the record "wasi:clocks/wall-clock@0.2.0#datetime".
-//
-// See [wallclock.DateTime] for more information.
-type DateTime = wallclock.DateTime
-
-// Descriptor represents the resource "wasi:filesystem/types@0.2.0#descriptor".
-//
-// A descriptor is a reference to a filesystem object, which may be a file,
-// directory, named pipe, special file, or other object on which filesystem
-// calls may be made.
-//
-//	resource descriptor
-type Descriptor cm.Resource
-
-// ResourceDrop represents the Canonical ABI function "resource-drop".
-//
-// Drops a resource handle.
-//
-//go:nosplit
-func (self Descriptor) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [resource-drop]descriptor
-//go:noescape
-func (self Descriptor) wasmimport_ResourceDrop()
-
-// Advise represents method "advise".
-//
-// Provide file advisory information on a descriptor.
-//
-// This is similar to `posix_fadvise` in POSIX.
-//
-//	advise: func(offset: filesize, length: filesize, advice: advice) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) Advise(offset FileSize, length FileSize, advice Advice) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_Advise(offset, length, advice, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.advise
-//go:noescape
-func (self Descriptor) wasmimport_Advise(offset FileSize, length FileSize, advice Advice, result *cm.ErrResult[struct{}, ErrorCode])
-
-// AppendViaStream represents method "append-via-stream".
-//
-// Return a stream for appending to a file, if available.
-//
-// May fail with an error-code describing why the file cannot be appended.
-//
-// Note: This allows using `write-stream`, which is similar to `write` with
-// `O_APPEND` in in POSIX.
-//
-//	append-via-stream: func() -> result<output-stream, error-code>
-//
-//go:nosplit
-func (self Descriptor) AppendViaStream() cm.OKResult[OutputStream, ErrorCode] {
-	var result cm.OKResult[OutputStream, ErrorCode]
-	self.wasmimport_AppendViaStream(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.append-via-stream
-//go:noescape
-func (self Descriptor) wasmimport_AppendViaStream(result *cm.OKResult[OutputStream, ErrorCode])
-
-// CreateDirectoryAt represents method "create-directory-at".
-//
-// Create a directory.
-//
-// Note: This is similar to `mkdirat` in POSIX.
-//
-//	create-directory-at: func(path: string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) CreateDirectoryAt(path string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_CreateDirectoryAt(path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.create-directory-at
-//go:noescape
-func (self Descriptor) wasmimport_CreateDirectoryAt(path string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// GetFlags represents method "get-flags".
-//
-// Get flags associated with a descriptor.
-//
-// Note: This returns similar flags to `fcntl(fd, F_GETFL)` in POSIX.
-//
-// Note: This returns the value that was the `fs_flags` value returned
-// from `fdstat_get` in earlier versions of WASI.
-//
-//	get-flags: func() -> result<descriptor-flags, error-code>
-//
-//go:nosplit
-func (self Descriptor) GetFlags() cm.OKResult[DescriptorFlags, ErrorCode] {
-	var result cm.OKResult[DescriptorFlags, ErrorCode]
-	self.wasmimport_GetFlags(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.get-flags
-//go:noescape
-func (self Descriptor) wasmimport_GetFlags(result *cm.OKResult[DescriptorFlags, ErrorCode])
-
-// GetType represents method "get-type".
-//
-// Get the dynamic type of a descriptor.
-//
-// Note: This returns the same value as the `type` field of the `fd-stat`
-// returned by `stat`, `stat-at` and similar.
-//
-// Note: This returns similar flags to the `st_mode & S_IFMT` value provided
-// by `fstat` in POSIX.
-//
-// Note: This returns the value that was the `fs_filetype` value returned
-// from `fdstat_get` in earlier versions of WASI.
-//
-//	get-type: func() -> result<descriptor-type, error-code>
-//
-//go:nosplit
-func (self Descriptor) GetType() cm.OKResult[DescriptorType, ErrorCode] {
-	var result cm.OKResult[DescriptorType, ErrorCode]
-	self.wasmimport_GetType(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.get-type
-//go:noescape
-func (self Descriptor) wasmimport_GetType(result *cm.OKResult[DescriptorType, ErrorCode])
-
-// IsSameObject represents method "is-same-object".
-//
-// Test whether two descriptors refer to the same filesystem object.
-//
-// In POSIX, this corresponds to testing whether the two descriptors have the
-// same device (`st_dev`) and inode (`st_ino` or `d_ino`) numbers.
-// wasi-filesystem does not expose device and inode numbers, so this function
-// may be used instead.
-//
-//	is-same-object: func(other: borrow<descriptor>) -> bool
-//
-//go:nosplit
-func (self Descriptor) IsSameObject(other Descriptor) bool {
-	return self.wasmimport_IsSameObject(other)
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.is-same-object
-//go:noescape
-func (self Descriptor) wasmimport_IsSameObject(other Descriptor) bool
-
-// LinkAt represents method "link-at".
-//
-// Create a hard link.
-//
-// Note: This is similar to `linkat` in POSIX.
-//
-//	link-at: func(old-path-flags: path-flags, old-path: string, new-descriptor: borrow<descriptor>,
-//	new-path: string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) LinkAt(oldPathFlags PathFlags, oldPath string, newDescriptor Descriptor, newPath string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_LinkAt(oldPathFlags, oldPath, newDescriptor, newPath, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.link-at
-//go:noescape
-func (self Descriptor) wasmimport_LinkAt(oldPathFlags PathFlags, oldPath string, newDescriptor Descriptor, newPath string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// MetadataHash represents method "metadata-hash".
-//
-// Return a hash of the metadata associated with a filesystem object referred
-// to by a descriptor.
-//
-// This returns a hash of the last-modification timestamp and file size, and
-// may also include the inode number, device number, birth timestamp, and
-// other metadata fields that may change when the file is modified or
-// replaced. It may also include a secret value chosen by the
-// implementation and not otherwise exposed.
-//
-// Implementations are encourated to provide the following properties:
-//
-// - If the file is not modified or replaced, the computed hash value should
-// usually not change.
-// - If the object is modified or replaced, the computed hash value should
-// usually change.
-// - The inputs to the hash should not be easily computable from the
-// computed hash.
-//
-// However, none of these is required.
-//
-//	metadata-hash: func() -> result<metadata-hash-value, error-code>
-//
-//go:nosplit
-func (self Descriptor) MetadataHash() cm.OKResult[MetadataHashValue, ErrorCode] {
-	var result cm.OKResult[MetadataHashValue, ErrorCode]
-	self.wasmimport_MetadataHash(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.metadata-hash
-//go:noescape
-func (self Descriptor) wasmimport_MetadataHash(result *cm.OKResult[MetadataHashValue, ErrorCode])
-
-// MetadataHashAt represents method "metadata-hash-at".
-//
-// Return a hash of the metadata associated with a filesystem object referred
-// to by a directory descriptor and a relative path.
-//
-// This performs the same hash computation as `metadata-hash`.
-//
-//	metadata-hash-at: func(path-flags: path-flags, path: string) -> result<metadata-hash-value,
-//	error-code>
-//
-//go:nosplit
-func (self Descriptor) MetadataHashAt(pathFlags PathFlags, path string) cm.OKResult[MetadataHashValue, ErrorCode] {
-	var result cm.OKResult[MetadataHashValue, ErrorCode]
-	self.wasmimport_MetadataHashAt(pathFlags, path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.metadata-hash-at
-//go:noescape
-func (self Descriptor) wasmimport_MetadataHashAt(pathFlags PathFlags, path string, result *cm.OKResult[MetadataHashValue, ErrorCode])
-
-// OpenAt represents method "open-at".
-//
-// Open a file or directory.
-//
-// The returned descriptor is not guaranteed to be the lowest-numbered
-// descriptor not currently open/ it is randomized to prevent applications
-// from depending on making assumptions about indexes, since this is
-// error-prone in multi-threaded contexts. The returned descriptor is
-// guaranteed to be less than 2**31.
-//
-// If `flags` contains `descriptor-flags::mutate-directory`, and the base
-// descriptor doesn't have `descriptor-flags::mutate-directory` set,
-// `open-at` fails with `error-code::read-only`.
-//
-// If `flags` contains `write` or `mutate-directory`, or `open-flags`
-// contains `truncate` or `create`, and the base descriptor doesn't have
-// `descriptor-flags::mutate-directory` set, `open-at` fails with
-// `error-code::read-only`.
-//
-// Note: This is similar to `openat` in POSIX.
-//
-//	open-at: func(path-flags: path-flags, path: string, open-flags: open-flags, flags:
-//	descriptor-flags) -> result<descriptor, error-code>
-//
-//go:nosplit
-func (self Descriptor) OpenAt(pathFlags PathFlags, path string, openFlags OpenFlags, flags DescriptorFlags) cm.OKResult[Descriptor, ErrorCode] {
-	var result cm.OKResult[Descriptor, ErrorCode]
-	self.wasmimport_OpenAt(pathFlags, path, openFlags, flags, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.open-at
-//go:noescape
-func (self Descriptor) wasmimport_OpenAt(pathFlags PathFlags, path string, openFlags OpenFlags, flags DescriptorFlags, result *cm.OKResult[Descriptor, ErrorCode])
-
-// Read represents method "read".
-//
-// Read from a descriptor, without using and updating the descriptor's offset.
-//
-// This function returns a list of bytes containing the data that was
-// read, along with a bool which, when true, indicates that the end of the
-// file was reached. The returned list will contain up to `length` bytes; it
-// may return fewer than requested, if the end of the file is reached or
-// if the I/O operation is interrupted.
-//
-// In the future, this may change to return a `stream<u8, error-code>`.
-//
-// Note: This is similar to `pread` in POSIX.
-//
-//	read: func(length: filesize, offset: filesize) -> result<tuple<list<u8>, bool>,
-//	error-code>
-//
-//go:nosplit
-func (self Descriptor) Read(length FileSize, offset FileSize) cm.OKResult[cm.Tuple[cm.List[uint8], bool], ErrorCode] {
-	var result cm.OKResult[cm.Tuple[cm.List[uint8], bool], ErrorCode]
-	self.wasmimport_Read(length, offset, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read
-//go:noescape
-func (self Descriptor) wasmimport_Read(length FileSize, offset FileSize, result *cm.OKResult[cm.Tuple[cm.List[uint8], bool], ErrorCode])
-
-// ReadDirectory represents method "read-directory".
-//
-// Read directory entries from a directory.
-//
-// On filesystems where directories contain entries referring to themselves
-// and their parents, often named `.` and `..` respectively, these entries
-// are omitted.
-//
-// This always returns a new stream which starts at the beginning of the
-// directory. Multiple streams may be active on the same directory, and they
-// do not interfere with each other.
-//
-//	read-directory: func() -> result<directory-entry-stream, error-code>
-//
-//go:nosplit
-func (self Descriptor) ReadDirectory() cm.OKResult[DirectoryEntryStream, ErrorCode] {
-	var result cm.OKResult[DirectoryEntryStream, ErrorCode]
-	self.wasmimport_ReadDirectory(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read-directory
-//go:noescape
-func (self Descriptor) wasmimport_ReadDirectory(result *cm.OKResult[DirectoryEntryStream, ErrorCode])
-
-// ReadViaStream represents method "read-via-stream".
-//
-// Return a stream for reading from a file, if available.
-//
-// May fail with an error-code describing why the file cannot be read.
-//
-// Multiple read, write, and append streams may be active on the same open
-// file and they do not interfere with each other.
-//
-// Note: This allows using `read-stream`, which is similar to `read` in POSIX.
-//
-//	read-via-stream: func(offset: filesize) -> result<input-stream, error-code>
-//
-//go:nosplit
-func (self Descriptor) ReadViaStream(offset FileSize) cm.OKResult[InputStream, ErrorCode] {
-	var result cm.OKResult[InputStream, ErrorCode]
-	self.wasmimport_ReadViaStream(offset, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read-via-stream
-//go:noescape
-func (self Descriptor) wasmimport_ReadViaStream(offset FileSize, result *cm.OKResult[InputStream, ErrorCode])
-
-// ReadLinkAt represents method "readlink-at".
-//
-// Read the contents of a symbolic link.
-//
-// If the contents contain an absolute or rooted path in the underlying
-// filesystem, this function fails with `error-code::not-permitted`.
-//
-// Note: This is similar to `readlinkat` in POSIX.
-//
-//	readlink-at: func(path: string) -> result<string, error-code>
-//
-//go:nosplit
-func (self Descriptor) ReadLinkAt(path string) cm.OKResult[string, ErrorCode] {
-	var result cm.OKResult[string, ErrorCode]
-	self.wasmimport_ReadLinkAt(path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.readlink-at
-//go:noescape
-func (self Descriptor) wasmimport_ReadLinkAt(path string, result *cm.OKResult[string, ErrorCode])
-
-// RemoveDirectoryAt represents method "remove-directory-at".
-//
-// Remove a directory.
-//
-// Return `error-code::not-empty` if the directory is not empty.
-//
-// Note: This is similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX.
-//
-//	remove-directory-at: func(path: string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) RemoveDirectoryAt(path string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_RemoveDirectoryAt(path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.remove-directory-at
-//go:noescape
-func (self Descriptor) wasmimport_RemoveDirectoryAt(path string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// RenameAt represents method "rename-at".
-//
-// Rename a filesystem object.
-//
-// Note: This is similar to `renameat` in POSIX.
-//
-//	rename-at: func(old-path: string, new-descriptor: borrow<descriptor>, new-path:
-//	string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) RenameAt(oldPath string, newDescriptor Descriptor, newPath string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_RenameAt(oldPath, newDescriptor, newPath, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.rename-at
-//go:noescape
-func (self Descriptor) wasmimport_RenameAt(oldPath string, newDescriptor Descriptor, newPath string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// SetSize represents method "set-size".
-//
-// Adjust the size of an open file. If this increases the file's size, the
-// extra bytes are filled with zeros.
-//
-// Note: This was called `fd_filestat_set_size` in earlier versions of WASI.
-//
-//	set-size: func(size: filesize) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) SetSize(size FileSize) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_SetSize(size, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-size
-//go:noescape
-func (self Descriptor) wasmimport_SetSize(size FileSize, result *cm.ErrResult[struct{}, ErrorCode])
-
-// SetTimes represents method "set-times".
-//
-// Adjust the timestamps of an open file or directory.
-//
-// Note: This is similar to `futimens` in POSIX.
-//
-// Note: This was called `fd_filestat_set_times` in earlier versions of WASI.
-//
-//	set-times: func(data-access-timestamp: new-timestamp, data-modification-timestamp:
-//	new-timestamp) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) SetTimes(dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_SetTimes(dataAccessTimestamp, dataModificationTimestamp, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-times
-//go:noescape
-func (self Descriptor) wasmimport_SetTimes(dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp, result *cm.ErrResult[struct{}, ErrorCode])
-
-// SetTimesAt represents method "set-times-at".
-//
-// Adjust the timestamps of a file or directory.
-//
-// Note: This is similar to `utimensat` in POSIX.
-//
-// Note: This was called `path_filestat_set_times` in earlier versions of
-// WASI.
-//
-//	set-times-at: func(path-flags: path-flags, path: string, data-access-timestamp:
-//	new-timestamp, data-modification-timestamp: new-timestamp) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) SetTimesAt(pathFlags PathFlags, path string, dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_SetTimesAt(pathFlags, path, dataAccessTimestamp, dataModificationTimestamp, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-times-at
-//go:noescape
-func (self Descriptor) wasmimport_SetTimesAt(pathFlags PathFlags, path string, dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp, result *cm.ErrResult[struct{}, ErrorCode])
-
-// Stat represents method "stat".
-//
-// Return the attributes of an open file or directory.
-//
-// Note: This is similar to `fstat` in POSIX, except that it does not return
-// device and inode information. For testing whether two descriptors refer to
-// the same underlying filesystem object, use `is-same-object`. To obtain
-// additional data that can be used do determine whether a file has been
-// modified, use `metadata-hash`.
-//
-// Note: This was called `fd_filestat_get` in earlier versions of WASI.
-//
-//	stat: func() -> result<descriptor-stat, error-code>
-//
-//go:nosplit
-func (self Descriptor) Stat() cm.OKResult[DescriptorStat, ErrorCode] {
-	var result cm.OKResult[DescriptorStat, ErrorCode]
-	self.wasmimport_Stat(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.stat
-//go:noescape
-func (self Descriptor) wasmimport_Stat(result *cm.OKResult[DescriptorStat, ErrorCode])
-
-// StatAt represents method "stat-at".
-//
-// Return the attributes of a file or directory.
-//
-// Note: This is similar to `fstatat` in POSIX, except that it does not
-// return device and inode information. See the `stat` description for a
-// discussion of alternatives.
-//
-// Note: This was called `path_filestat_get` in earlier versions of WASI.
-//
-//	stat-at: func(path-flags: path-flags, path: string) -> result<descriptor-stat,
-//	error-code>
-//
-//go:nosplit
-func (self Descriptor) StatAt(pathFlags PathFlags, path string) cm.OKResult[DescriptorStat, ErrorCode] {
-	var result cm.OKResult[DescriptorStat, ErrorCode]
-	self.wasmimport_StatAt(pathFlags, path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.stat-at
-//go:noescape
-func (self Descriptor) wasmimport_StatAt(pathFlags PathFlags, path string, result *cm.OKResult[DescriptorStat, ErrorCode])
-
-// SymlinkAt represents method "symlink-at".
-//
-// Create a symbolic link (also known as a "symlink").
-//
-// If `old-path` starts with `/`, the function fails with
-// `error-code::not-permitted`.
-//
-// Note: This is similar to `symlinkat` in POSIX.
-//
-//	symlink-at: func(old-path: string, new-path: string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) SymlinkAt(oldPath string, newPath string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_SymlinkAt(oldPath, newPath, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.symlink-at
-//go:noescape
-func (self Descriptor) wasmimport_SymlinkAt(oldPath string, newPath string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// Sync represents method "sync".
-//
-// Synchronize the data and metadata of a file to disk.
-//
-// This function succeeds with no effect if the file descriptor is not
-// opened for writing.
-//
-// Note: This is similar to `fsync` in POSIX.
-//
-//	sync: func() -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) Sync() cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_Sync(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.sync
-//go:noescape
-func (self Descriptor) wasmimport_Sync(result *cm.ErrResult[struct{}, ErrorCode])
-
-// SyncData represents method "sync-data".
-//
-// Synchronize the data of a file to disk.
-//
-// This function succeeds with no effect if the file descriptor is not
-// opened for writing.
-//
-// Note: This is similar to `fdatasync` in POSIX.
-//
-//	sync-data: func() -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) SyncData() cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_SyncData(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.sync-data
-//go:noescape
-func (self Descriptor) wasmimport_SyncData(result *cm.ErrResult[struct{}, ErrorCode])
-
-// UnlinkFileAt represents method "unlink-file-at".
-//
-// Unlink a filesystem object that is not a directory.
-//
-// Return `error-code::is-directory` if the path refers to a directory.
-// Note: This is similar to `unlinkat(fd, path, 0)` in POSIX.
-//
-//	unlink-file-at: func(path: string) -> result<_, error-code>
-//
-//go:nosplit
-func (self Descriptor) UnlinkFileAt(path string) cm.ErrResult[struct{}, ErrorCode] {
-	var result cm.ErrResult[struct{}, ErrorCode]
-	self.wasmimport_UnlinkFileAt(path, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.unlink-file-at
-//go:noescape
-func (self Descriptor) wasmimport_UnlinkFileAt(path string, result *cm.ErrResult[struct{}, ErrorCode])
-
-// Write represents method "write".
-//
-// Write to a descriptor, without using and updating the descriptor's offset.
-//
-// It is valid to write past the end of a file; the file is extended to the
-// extent of the write, with bytes between the previous end and the start of
-// the write set to zero.
-//
-// In the future, this may change to take a `stream<u8, error-code>`.
-//
-// Note: This is similar to `pwrite` in POSIX.
-//
-//	write: func(buffer: list<u8>, offset: filesize) -> result<filesize, error-code>
-//
-//go:nosplit
-func (self Descriptor) Write(buffer cm.List[uint8], offset FileSize) cm.OKResult[FileSize, ErrorCode] {
-	var result cm.OKResult[FileSize, ErrorCode]
-	self.wasmimport_Write(buffer, offset, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.write
-//go:noescape
-func (self Descriptor) wasmimport_Write(buffer cm.List[uint8], offset FileSize, result *cm.OKResult[FileSize, ErrorCode])
-
-// WriteViaStream represents method "write-via-stream".
-//
-// Return a stream for writing to a file, if available.
-//
-// May fail with an error-code describing why the file cannot be written.
-//
-// Note: This allows using `write-stream`, which is similar to `write` in
-// POSIX.
-//
-//	write-via-stream: func(offset: filesize) -> result<output-stream, error-code>
-//
-//go:nosplit
-func (self Descriptor) WriteViaStream(offset FileSize) cm.OKResult[OutputStream, ErrorCode] {
-	var result cm.OKResult[OutputStream, ErrorCode]
-	self.wasmimport_WriteViaStream(offset, &result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.write-via-stream
-//go:noescape
-func (self Descriptor) wasmimport_WriteViaStream(offset FileSize, result *cm.OKResult[OutputStream, ErrorCode])
 
 // DescriptorFlags represents the flags "wasi:filesystem/types@0.2.0#descriptor-flags".
 //
@@ -791,6 +150,54 @@ const (
 	DescriptorFlagsMutateDirectory
 )
 
+// PathFlags represents the flags "wasi:filesystem/types@0.2.0#path-flags".
+//
+// Flags determining the method of how paths are resolved.
+//
+//	flags path-flags {
+//		symlink-follow,
+//	}
+type PathFlags uint8
+
+const (
+	// As long as the resolved path corresponds to a symbolic link, it is
+	// expanded.
+	PathFlagsSymlinkFollow PathFlags = 1 << iota
+)
+
+// OpenFlags represents the flags "wasi:filesystem/types@0.2.0#open-flags".
+//
+// Open flags used by `open-at`.
+//
+//	flags open-flags {
+//		create,
+//		directory,
+//		exclusive,
+//		truncate,
+//	}
+type OpenFlags uint8
+
+const (
+	// Create file if it does not exist, similar to `O_CREAT` in POSIX.
+	OpenFlagsCreate OpenFlags = 1 << iota
+
+	// Fail if not a directory, similar to `O_DIRECTORY` in POSIX.
+	OpenFlagsDirectory
+
+	// Fail if file already exists, similar to `O_EXCL` in POSIX.
+	OpenFlagsExclusive
+
+	// Truncate file to size 0, similar to `O_TRUNC` in POSIX.
+	OpenFlagsTruncate
+)
+
+// LinkCount represents the u64 "wasi:filesystem/types@0.2.0#link-count".
+//
+// Number of hard links to an inode.
+//
+//	type link-count = u64
+type LinkCount uint64
+
 // DescriptorStat represents the record "wasi:filesystem/types@0.2.0#descriptor-stat".
 //
 // File attributes.
@@ -820,65 +227,70 @@ type DescriptorStat struct {
 	//
 	// If the `option` is none, the platform doesn't maintain an access
 	// timestamp for this file.
-	DataAccessTimestamp cm.Option[DateTime]
+	DataAccessTimestamp cm.Option[wallclock.DateTime]
 
 	// Last data modification timestamp.
 	//
 	// If the `option` is none, the platform doesn't maintain a
 	// modification timestamp for this file.
-	DataModificationTimestamp cm.Option[DateTime]
+	DataModificationTimestamp cm.Option[wallclock.DateTime]
 
 	// Last file status-change timestamp.
 	//
 	// If the `option` is none, the platform doesn't maintain a
 	// status-change timestamp for this file.
-	StatusChangeTimestamp cm.Option[DateTime]
+	StatusChangeTimestamp cm.Option[wallclock.DateTime]
 }
 
-// DescriptorType represents the enum "wasi:filesystem/types@0.2.0#descriptor-type".
+// NewTimestamp represents the variant "wasi:filesystem/types@0.2.0#new-timestamp".
 //
-// The type of a filesystem object referenced by a descriptor.
+// When setting a timestamp, this gives the value to set it to.
 //
-// Note: This was called `filetype` in earlier versions of WASI.
-//
-//	enum descriptor-type {
-//		unknown,
-//		block-device,
-//		character-device,
-//		directory,
-//		fifo,
-//		symbolic-link,
-//		regular-file,
-//		socket
+//	variant new-timestamp {
+//		no-change,
+//		now,
+//		timestamp(datetime),
 //	}
-type DescriptorType uint8
+type NewTimestamp cm.Variant[uint8, wallclock.DateTime, wallclock.DateTime]
 
-const (
-	// The type of the descriptor or file is unknown or is different from
-	// any of the other types specified.
-	DescriptorTypeUnknown DescriptorType = iota
+// NewTimestampNoChange returns a [NewTimestamp] of case "no-change".
+//
+// Leave the timestamp set to its previous value.
+func NewTimestampNoChange() NewTimestamp {
+	var data struct{}
+	return cm.New[NewTimestamp](0, data)
+}
 
-	// The descriptor refers to a block device inode.
-	DescriptorTypeBlockDevice
+// NoChange returns true if [NewTimestamp] represents the variant case "no-change".
+func (self *NewTimestamp) NoChange() bool {
+	return cm.Tag(self) == 0
+}
 
-	// The descriptor refers to a character device inode.
-	DescriptorTypeCharacterDevice
+// NewTimestampNow returns a [NewTimestamp] of case "now".
+//
+// Set the timestamp to the current time of the system clock associated
+// with the filesystem.
+func NewTimestampNow() NewTimestamp {
+	var data struct{}
+	return cm.New[NewTimestamp](1, data)
+}
 
-	// The descriptor refers to a directory inode.
-	DescriptorTypeDirectory
+// Now returns true if [NewTimestamp] represents the variant case "now".
+func (self *NewTimestamp) Now() bool {
+	return cm.Tag(self) == 1
+}
 
-	// The descriptor refers to a named pipe.
-	DescriptorTypeFIFO
+// NewTimestampTimestamp returns a [NewTimestamp] of case "timestamp".
+//
+// Set the timestamp to the given value.
+func NewTimestampTimestamp(data wallclock.DateTime) NewTimestamp {
+	return cm.New[NewTimestamp](2, data)
+}
 
-	// The file refers to a symbolic link inode.
-	DescriptorTypeSymbolicLink
-
-	// The descriptor refers to a regular file inode.
-	DescriptorTypeRegularFile
-
-	// The descriptor refers to a socket.
-	DescriptorTypeSocket
-)
+// Timestamp returns a non-nil *[wallclock.DateTime] if [NewTimestamp] represents the variant case "timestamp".
+func (self *NewTimestamp) Timestamp() *wallclock.DateTime {
+	return cm.Case[wallclock.DateTime](self, 2)
+}
 
 // DirectoryEntry represents the record "wasi:filesystem/types@0.2.0#directory-entry".
 //
@@ -895,48 +307,6 @@ type DirectoryEntry struct {
 	// The name of the object.
 	Name string
 }
-
-// DirectoryEntryStream represents the resource "wasi:filesystem/types@0.2.0#directory-entry-stream".
-//
-// A stream of directory entries.
-//
-//	resource directory-entry-stream
-type DirectoryEntryStream cm.Resource
-
-// ResourceDrop represents the Canonical ABI function "resource-drop".
-//
-// Drops a resource handle.
-//
-//go:nosplit
-func (self DirectoryEntryStream) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [resource-drop]directory-entry-stream
-//go:noescape
-func (self DirectoryEntryStream) wasmimport_ResourceDrop()
-
-// ReadDirectoryEntry represents method "read-directory-entry".
-//
-// Read a single directory entry from a `directory-entry-stream`.
-//
-//	read-directory-entry: func() -> result<option<directory-entry>, error-code>
-//
-//go:nosplit
-func (self DirectoryEntryStream) ReadDirectoryEntry() cm.OKResult[cm.Option[DirectoryEntry], ErrorCode] {
-	var result cm.OKResult[cm.Option[DirectoryEntry], ErrorCode]
-	self.wasmimport_ReadDirectoryEntry(&result)
-	return result
-}
-
-//go:wasmimport wasi:filesystem/types@0.2.0 [method]directory-entry-stream.read-directory-entry
-//go:noescape
-func (self DirectoryEntryStream) wasmimport_ReadDirectoryEntry(result *cm.OKResult[cm.Option[DirectoryEntry], ErrorCode])
-
-// Error represents the resource "wasi:io/error@0.2.0#error".
-//
-// See [ioerror.Error] for more information.
-type Error = ioerror.Error
 
 // ErrorCode represents the enum "wasi:filesystem/types@0.2.0#error-code".
 //
@@ -1100,24 +470,45 @@ const (
 	ErrorCodeCrossDevice
 )
 
-// FileSize represents the type "wasi:filesystem/types@0.2.0#filesize".
+// Advice represents the enum "wasi:filesystem/types@0.2.0#advice".
 //
-// File size or length of a region within a file.
+// File or memory access pattern advisory information.
 //
-//	type filesize = u64
-type FileSize uint64
+//	enum advice {
+//		normal,
+//		sequential,
+//		random,
+//		will-need,
+//		dont-need,
+//		no-reuse
+//	}
+type Advice uint8
 
-// InputStream represents the resource "wasi:io/streams@0.2.0#input-stream".
-//
-// See [streams.InputStream] for more information.
-type InputStream = streams.InputStream
+const (
+	// The application has no advice to give on its behavior with respect
+	// to the specified data.
+	AdviceNormal Advice = iota
 
-// LinkCount represents the type "wasi:filesystem/types@0.2.0#link-count".
-//
-// Number of hard links to an inode.
-//
-//	type link-count = u64
-type LinkCount uint64
+	// The application expects to access the specified data sequentially
+	// from lower offsets to higher offsets.
+	AdviceSequential
+
+	// The application expects to access the specified data in a random
+	// order.
+	AdviceRandom
+
+	// The application expects to access the specified data in the near
+	// future.
+	AdviceWillNeed
+
+	// The application expects that it will not access the specified data
+	// in the near future.
+	AdviceDontNeed
+
+	// The application expects to access the specified data once and then
+	// not reuse it thereafter.
+	AdviceNoReuse
+)
 
 // MetadataHashValue represents the record "wasi:filesystem/types@0.2.0#metadata-hash-value".
 //
@@ -1136,103 +527,737 @@ type MetadataHashValue struct {
 	Upper uint64
 }
 
-// NewTimestamp represents the variant "wasi:filesystem/types@0.2.0#new-timestamp".
+// Descriptor represents the imported resource "wasi:filesystem/types@0.2.0#descriptor".
 //
-// When setting a timestamp, this gives the value to set it to.
+// A descriptor is a reference to a filesystem object, which may be a file,
+// directory, named pipe, special file, or other object on which filesystem
+// calls may be made.
 //
-//	variant new-timestamp {
-//		no-change,
-//		now,
-//		timestamp(datetime),
-//	}
-type NewTimestamp cm.Variant[uint8, DateTime, DateTime]
+//	resource descriptor
+type Descriptor cm.Resource
 
-// NewTimestampNoChange returns a [NewTimestamp] of case "no-change".
+// ResourceDrop represents the imported resource-drop for resource "descriptor".
 //
-// Leave the timestamp set to its previous value.
-func NewTimestampNoChange() NewTimestamp {
-	var data struct{}
-	return cm.New[NewTimestamp](0, data)
+// Drops a resource handle.
+//
+//go:nosplit
+func (self Descriptor) ResourceDrop() {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorResourceDrop((uint32)(self0))
+	return
 }
 
-// NoChange returns true if [NewTimestamp] represents the variant case "no-change".
-func (self *NewTimestamp) NoChange() bool {
-	return cm.Tag(self) == 0
+//go:wasmimport wasi:filesystem/types@0.2.0 [resource-drop]descriptor
+//go:noescape
+func wasmimport_DescriptorResourceDrop(self0 uint32)
+
+// Advise represents the imported method "advise".
+//
+// Provide file advisory information on a descriptor.
+//
+// This is similar to `posix_fadvise` in POSIX.
+//
+//	advise: func(offset: filesize, length: filesize, advice: advice) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) Advise(offset FileSize, length FileSize, advice Advice) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	offset0 := (uint64)(offset)
+	length0 := (uint64)(length)
+	advice0 := (uint32)(advice)
+	wasmimport_DescriptorAdvise((uint32)(self0), (uint64)(offset0), (uint64)(length0), (uint32)(advice0), &result)
+	return
 }
 
-// NewTimestampNow returns a [NewTimestamp] of case "now".
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.advise
+//go:noescape
+func wasmimport_DescriptorAdvise(self0 uint32, offset0 uint64, length0 uint64, advice0 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// AppendViaStream represents the imported method "append-via-stream".
 //
-// Set the timestamp to the current time of the system clock associated
-// with the filesystem.
-func NewTimestampNow() NewTimestamp {
-	var data struct{}
-	return cm.New[NewTimestamp](1, data)
+// Return a stream for appending to a file, if available.
+//
+// May fail with an error-code describing why the file cannot be appended.
+//
+// Note: This allows using `write-stream`, which is similar to `write` with
+// `O_APPEND` in in POSIX.
+//
+//	append-via-stream: func() -> result<output-stream, error-code>
+//
+//go:nosplit
+func (self Descriptor) AppendViaStream() (result cm.OKResult[streams.OutputStream, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorAppendViaStream((uint32)(self0), &result)
+	return
 }
 
-// Now returns true if [NewTimestamp] represents the variant case "now".
-func (self *NewTimestamp) Now() bool {
-	return cm.Tag(self) == 1
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.append-via-stream
+//go:noescape
+func wasmimport_DescriptorAppendViaStream(self0 uint32, result *cm.OKResult[streams.OutputStream, ErrorCode])
+
+// CreateDirectoryAt represents the imported method "create-directory-at".
+//
+// Create a directory.
+//
+// Note: This is similar to `mkdirat` in POSIX.
+//
+//	create-directory-at: func(path: string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) CreateDirectoryAt(path string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorCreateDirectoryAt((uint32)(self0), (*uint8)(path0), (uint32)(path1), &result)
+	return
 }
 
-// NewTimestampTimestamp returns a [NewTimestamp] of case "timestamp".
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.create-directory-at
+//go:noescape
+func wasmimport_DescriptorCreateDirectoryAt(self0 uint32, path0 *uint8, path1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// GetFlags represents the imported method "get-flags".
 //
-// Set the timestamp to the given value.
-func NewTimestampTimestamp(data DateTime) NewTimestamp {
-	return cm.New[NewTimestamp](2, data)
+// Get flags associated with a descriptor.
+//
+// Note: This returns similar flags to `fcntl(fd, F_GETFL)` in POSIX.
+//
+// Note: This returns the value that was the `fs_flags` value returned
+// from `fdstat_get` in earlier versions of WASI.
+//
+//	get-flags: func() -> result<descriptor-flags, error-code>
+//
+//go:nosplit
+func (self Descriptor) GetFlags() (result cm.OKResult[DescriptorFlags, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorGetFlags((uint32)(self0), &result)
+	return
 }
 
-// Timestamp returns a non-nil *[DateTime] if [NewTimestamp] represents the variant case "timestamp".
-func (self *NewTimestamp) Timestamp() *DateTime {
-	return cm.Case[DateTime](self, 2)
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.get-flags
+//go:noescape
+func wasmimport_DescriptorGetFlags(self0 uint32, result *cm.OKResult[DescriptorFlags, ErrorCode])
+
+// GetType represents the imported method "get-type".
+//
+// Get the dynamic type of a descriptor.
+//
+// Note: This returns the same value as the `type` field of the `fd-stat`
+// returned by `stat`, `stat-at` and similar.
+//
+// Note: This returns similar flags to the `st_mode & S_IFMT` value provided
+// by `fstat` in POSIX.
+//
+// Note: This returns the value that was the `fs_filetype` value returned
+// from `fdstat_get` in earlier versions of WASI.
+//
+//	get-type: func() -> result<descriptor-type, error-code>
+//
+//go:nosplit
+func (self Descriptor) GetType() (result cm.OKResult[DescriptorType, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorGetType((uint32)(self0), &result)
+	return
 }
 
-// OpenFlags represents the flags "wasi:filesystem/types@0.2.0#open-flags".
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.get-type
+//go:noescape
+func wasmimport_DescriptorGetType(self0 uint32, result *cm.OKResult[DescriptorType, ErrorCode])
+
+// IsSameObject represents the imported method "is-same-object".
 //
-// Open flags used by `open-at`.
+// Test whether two descriptors refer to the same filesystem object.
 //
-//	flags open-flags {
-//		create,
-//		directory,
-//		exclusive,
-//		truncate,
-//	}
-type OpenFlags uint8
-
-const (
-	// Create file if it does not exist, similar to `O_CREAT` in POSIX.
-	OpenFlagsCreate OpenFlags = 1 << iota
-
-	// Fail if not a directory, similar to `O_DIRECTORY` in POSIX.
-	OpenFlagsDirectory
-
-	// Fail if file already exists, similar to `O_EXCL` in POSIX.
-	OpenFlagsExclusive
-
-	// Truncate file to size 0, similar to `O_TRUNC` in POSIX.
-	OpenFlagsTruncate
-)
-
-// OutputStream represents the resource "wasi:io/streams@0.2.0#output-stream".
+// In POSIX, this corresponds to testing whether the two descriptors have the
+// same device (`st_dev`) and inode (`st_ino` or `d_ino`) numbers.
+// wasi-filesystem does not expose device and inode numbers, so this function
+// may be used instead.
 //
-// See [streams.OutputStream] for more information.
-type OutputStream = streams.OutputStream
-
-// PathFlags represents the flags "wasi:filesystem/types@0.2.0#path-flags".
+//	is-same-object: func(other: borrow<descriptor>) -> bool
 //
-// Flags determining the method of how paths are resolved.
+//go:nosplit
+func (self Descriptor) IsSameObject(other Descriptor) (result bool) {
+	self0 := cm.Reinterpret[uint32](self)
+	other0 := cm.Reinterpret[uint32](other)
+	result0 := wasmimport_DescriptorIsSameObject((uint32)(self0), (uint32)(other0))
+	result = cm.U32ToBool((uint32)(result0))
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.is-same-object
+//go:noescape
+func wasmimport_DescriptorIsSameObject(self0 uint32, other0 uint32) (result0 uint32)
+
+// LinkAt represents the imported method "link-at".
 //
-//	flags path-flags {
-//		symlink-follow,
-//	}
-type PathFlags uint8
+// Create a hard link.
+//
+// Note: This is similar to `linkat` in POSIX.
+//
+//	link-at: func(old-path-flags: path-flags, old-path: string, new-descriptor: borrow<descriptor>,
+//	new-path: string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) LinkAt(oldPathFlags PathFlags, oldPath string, newDescriptor Descriptor, newPath string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	oldPathFlags0 := (uint32)(oldPathFlags)
+	oldPath0, oldPath1 := cm.LowerString(oldPath)
+	newDescriptor0 := cm.Reinterpret[uint32](newDescriptor)
+	newPath0, newPath1 := cm.LowerString(newPath)
+	wasmimport_DescriptorLinkAt((uint32)(self0), (uint32)(oldPathFlags0), (*uint8)(oldPath0), (uint32)(oldPath1), (uint32)(newDescriptor0), (*uint8)(newPath0), (uint32)(newPath1), &result)
+	return
+}
 
-const (
-	// As long as the resolved path corresponds to a symbolic link, it is
-	// expanded.
-	PathFlagsSymlinkFollow PathFlags = 1 << iota
-)
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.link-at
+//go:noescape
+func wasmimport_DescriptorLinkAt(self0 uint32, oldPathFlags0 uint32, oldPath0 *uint8, oldPath1 uint32, newDescriptor0 uint32, newPath0 *uint8, newPath1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
 
-// FilesystemErrorCode represents function "wasi:filesystem/types@0.2.0#filesystem-error-code".
+// MetadataHash represents the imported method "metadata-hash".
+//
+// Return a hash of the metadata associated with a filesystem object referred
+// to by a descriptor.
+//
+// This returns a hash of the last-modification timestamp and file size, and
+// may also include the inode number, device number, birth timestamp, and
+// other metadata fields that may change when the file is modified or
+// replaced. It may also include a secret value chosen by the
+// implementation and not otherwise exposed.
+//
+// Implementations are encourated to provide the following properties:
+//
+// - If the file is not modified or replaced, the computed hash value should
+// usually not change.
+// - If the object is modified or replaced, the computed hash value should
+// usually change.
+// - The inputs to the hash should not be easily computable from the
+// computed hash.
+//
+// However, none of these is required.
+//
+//	metadata-hash: func() -> result<metadata-hash-value, error-code>
+//
+//go:nosplit
+func (self Descriptor) MetadataHash() (result cm.OKResult[MetadataHashValue, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorMetadataHash((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.metadata-hash
+//go:noescape
+func wasmimport_DescriptorMetadataHash(self0 uint32, result *cm.OKResult[MetadataHashValue, ErrorCode])
+
+// MetadataHashAt represents the imported method "metadata-hash-at".
+//
+// Return a hash of the metadata associated with a filesystem object referred
+// to by a directory descriptor and a relative path.
+//
+// This performs the same hash computation as `metadata-hash`.
+//
+//	metadata-hash-at: func(path-flags: path-flags, path: string) -> result<metadata-hash-value,
+//	error-code>
+//
+//go:nosplit
+func (self Descriptor) MetadataHashAt(pathFlags PathFlags, path string) (result cm.OKResult[MetadataHashValue, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	pathFlags0 := (uint32)(pathFlags)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorMetadataHashAt((uint32)(self0), (uint32)(pathFlags0), (*uint8)(path0), (uint32)(path1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.metadata-hash-at
+//go:noescape
+func wasmimport_DescriptorMetadataHashAt(self0 uint32, pathFlags0 uint32, path0 *uint8, path1 uint32, result *cm.OKResult[MetadataHashValue, ErrorCode])
+
+// OpenAt represents the imported method "open-at".
+//
+// Open a file or directory.
+//
+// The returned descriptor is not guaranteed to be the lowest-numbered
+// descriptor not currently open/ it is randomized to prevent applications
+// from depending on making assumptions about indexes, since this is
+// error-prone in multi-threaded contexts. The returned descriptor is
+// guaranteed to be less than 2**31.
+//
+// If `flags` contains `descriptor-flags::mutate-directory`, and the base
+// descriptor doesn't have `descriptor-flags::mutate-directory` set,
+// `open-at` fails with `error-code::read-only`.
+//
+// If `flags` contains `write` or `mutate-directory`, or `open-flags`
+// contains `truncate` or `create`, and the base descriptor doesn't have
+// `descriptor-flags::mutate-directory` set, `open-at` fails with
+// `error-code::read-only`.
+//
+// Note: This is similar to `openat` in POSIX.
+//
+//	open-at: func(path-flags: path-flags, path: string, open-flags: open-flags, %flags:
+//	descriptor-flags) -> result<descriptor, error-code>
+//
+//go:nosplit
+func (self Descriptor) OpenAt(pathFlags PathFlags, path string, openFlags OpenFlags, flags DescriptorFlags) (result cm.OKResult[Descriptor, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	pathFlags0 := (uint32)(pathFlags)
+	path0, path1 := cm.LowerString(path)
+	openFlags0 := (uint32)(openFlags)
+	flags0 := (uint32)(flags)
+	wasmimport_DescriptorOpenAt((uint32)(self0), (uint32)(pathFlags0), (*uint8)(path0), (uint32)(path1), (uint32)(openFlags0), (uint32)(flags0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.open-at
+//go:noescape
+func wasmimport_DescriptorOpenAt(self0 uint32, pathFlags0 uint32, path0 *uint8, path1 uint32, openFlags0 uint32, flags0 uint32, result *cm.OKResult[Descriptor, ErrorCode])
+
+// Read represents the imported method "read".
+//
+// Read from a descriptor, without using and updating the descriptor's offset.
+//
+// This function returns a list of bytes containing the data that was
+// read, along with a bool which, when true, indicates that the end of the
+// file was reached. The returned list will contain up to `length` bytes; it
+// may return fewer than requested, if the end of the file is reached or
+// if the I/O operation is interrupted.
+//
+// In the future, this may change to return a `stream<u8, error-code>`.
+//
+// Note: This is similar to `pread` in POSIX.
+//
+//	read: func(length: filesize, offset: filesize) -> result<tuple<list<u8>, bool>,
+//	error-code>
+//
+//go:nosplit
+func (self Descriptor) Read(length FileSize, offset FileSize) (result cm.OKResult[cm.Tuple[cm.List[uint8], bool], ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	length0 := (uint64)(length)
+	offset0 := (uint64)(offset)
+	wasmimport_DescriptorRead((uint32)(self0), (uint64)(length0), (uint64)(offset0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read
+//go:noescape
+func wasmimport_DescriptorRead(self0 uint32, length0 uint64, offset0 uint64, result *cm.OKResult[cm.Tuple[cm.List[uint8], bool], ErrorCode])
+
+// ReadDirectory represents the imported method "read-directory".
+//
+// Read directory entries from a directory.
+//
+// On filesystems where directories contain entries referring to themselves
+// and their parents, often named `.` and `..` respectively, these entries
+// are omitted.
+//
+// This always returns a new stream which starts at the beginning of the
+// directory. Multiple streams may be active on the same directory, and they
+// do not interfere with each other.
+//
+//	read-directory: func() -> result<directory-entry-stream, error-code>
+//
+//go:nosplit
+func (self Descriptor) ReadDirectory() (result cm.OKResult[DirectoryEntryStream, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorReadDirectory((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read-directory
+//go:noescape
+func wasmimport_DescriptorReadDirectory(self0 uint32, result *cm.OKResult[DirectoryEntryStream, ErrorCode])
+
+// ReadViaStream represents the imported method "read-via-stream".
+//
+// Return a stream for reading from a file, if available.
+//
+// May fail with an error-code describing why the file cannot be read.
+//
+// Multiple read, write, and append streams may be active on the same open
+// file and they do not interfere with each other.
+//
+// Note: This allows using `read-stream`, which is similar to `read` in POSIX.
+//
+//	read-via-stream: func(offset: filesize) -> result<input-stream, error-code>
+//
+//go:nosplit
+func (self Descriptor) ReadViaStream(offset FileSize) (result cm.OKResult[streams.InputStream, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	offset0 := (uint64)(offset)
+	wasmimport_DescriptorReadViaStream((uint32)(self0), (uint64)(offset0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.read-via-stream
+//go:noescape
+func wasmimport_DescriptorReadViaStream(self0 uint32, offset0 uint64, result *cm.OKResult[streams.InputStream, ErrorCode])
+
+// ReadLinkAt represents the imported method "readlink-at".
+//
+// Read the contents of a symbolic link.
+//
+// If the contents contain an absolute or rooted path in the underlying
+// filesystem, this function fails with `error-code::not-permitted`.
+//
+// Note: This is similar to `readlinkat` in POSIX.
+//
+//	readlink-at: func(path: string) -> result<string, error-code>
+//
+//go:nosplit
+func (self Descriptor) ReadLinkAt(path string) (result cm.OKResult[string, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorReadLinkAt((uint32)(self0), (*uint8)(path0), (uint32)(path1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.readlink-at
+//go:noescape
+func wasmimport_DescriptorReadLinkAt(self0 uint32, path0 *uint8, path1 uint32, result *cm.OKResult[string, ErrorCode])
+
+// RemoveDirectoryAt represents the imported method "remove-directory-at".
+//
+// Remove a directory.
+//
+// Return `error-code::not-empty` if the directory is not empty.
+//
+// Note: This is similar to `unlinkat(fd, path, AT_REMOVEDIR)` in POSIX.
+//
+//	remove-directory-at: func(path: string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) RemoveDirectoryAt(path string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorRemoveDirectoryAt((uint32)(self0), (*uint8)(path0), (uint32)(path1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.remove-directory-at
+//go:noescape
+func wasmimport_DescriptorRemoveDirectoryAt(self0 uint32, path0 *uint8, path1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// RenameAt represents the imported method "rename-at".
+//
+// Rename a filesystem object.
+//
+// Note: This is similar to `renameat` in POSIX.
+//
+//	rename-at: func(old-path: string, new-descriptor: borrow<descriptor>, new-path:
+//	string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) RenameAt(oldPath string, newDescriptor Descriptor, newPath string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	oldPath0, oldPath1 := cm.LowerString(oldPath)
+	newDescriptor0 := cm.Reinterpret[uint32](newDescriptor)
+	newPath0, newPath1 := cm.LowerString(newPath)
+	wasmimport_DescriptorRenameAt((uint32)(self0), (*uint8)(oldPath0), (uint32)(oldPath1), (uint32)(newDescriptor0), (*uint8)(newPath0), (uint32)(newPath1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.rename-at
+//go:noescape
+func wasmimport_DescriptorRenameAt(self0 uint32, oldPath0 *uint8, oldPath1 uint32, newDescriptor0 uint32, newPath0 *uint8, newPath1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// SetSize represents the imported method "set-size".
+//
+// Adjust the size of an open file. If this increases the file's size, the
+// extra bytes are filled with zeros.
+//
+// Note: This was called `fd_filestat_set_size` in earlier versions of WASI.
+//
+//	set-size: func(size: filesize) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) SetSize(size FileSize) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	size0 := (uint64)(size)
+	wasmimport_DescriptorSetSize((uint32)(self0), (uint64)(size0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-size
+//go:noescape
+func wasmimport_DescriptorSetSize(self0 uint32, size0 uint64, result *cm.ErrResult[struct{}, ErrorCode])
+
+// SetTimes represents the imported method "set-times".
+//
+// Adjust the timestamps of an open file or directory.
+//
+// Note: This is similar to `futimens` in POSIX.
+//
+// Note: This was called `fd_filestat_set_times` in earlier versions of WASI.
+//
+//	set-times: func(data-access-timestamp: new-timestamp, data-modification-timestamp:
+//	new-timestamp) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) SetTimes(dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	dataAccessTimestamp0, dataAccessTimestamp1, dataAccessTimestamp2 := lower_NewTimestamp(dataAccessTimestamp)
+	dataModificationTimestamp0, dataModificationTimestamp1, dataModificationTimestamp2 := lower_NewTimestamp(dataModificationTimestamp)
+	wasmimport_DescriptorSetTimes((uint32)(self0), (uint32)(dataAccessTimestamp0), (uint64)(dataAccessTimestamp1), (uint32)(dataAccessTimestamp2), (uint32)(dataModificationTimestamp0), (uint64)(dataModificationTimestamp1), (uint32)(dataModificationTimestamp2), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-times
+//go:noescape
+func wasmimport_DescriptorSetTimes(self0 uint32, dataAccessTimestamp0 uint32, dataAccessTimestamp1 uint64, dataAccessTimestamp2 uint32, dataModificationTimestamp0 uint32, dataModificationTimestamp1 uint64, dataModificationTimestamp2 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// SetTimesAt represents the imported method "set-times-at".
+//
+// Adjust the timestamps of a file or directory.
+//
+// Note: This is similar to `utimensat` in POSIX.
+//
+// Note: This was called `path_filestat_set_times` in earlier versions of
+// WASI.
+//
+//	set-times-at: func(path-flags: path-flags, path: string, data-access-timestamp:
+//	new-timestamp, data-modification-timestamp: new-timestamp) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) SetTimesAt(pathFlags PathFlags, path string, dataAccessTimestamp NewTimestamp, dataModificationTimestamp NewTimestamp) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	pathFlags0 := (uint32)(pathFlags)
+	path0, path1 := cm.LowerString(path)
+	dataAccessTimestamp0, dataAccessTimestamp1, dataAccessTimestamp2 := lower_NewTimestamp(dataAccessTimestamp)
+	dataModificationTimestamp0, dataModificationTimestamp1, dataModificationTimestamp2 := lower_NewTimestamp(dataModificationTimestamp)
+	wasmimport_DescriptorSetTimesAt((uint32)(self0), (uint32)(pathFlags0), (*uint8)(path0), (uint32)(path1), (uint32)(dataAccessTimestamp0), (uint64)(dataAccessTimestamp1), (uint32)(dataAccessTimestamp2), (uint32)(dataModificationTimestamp0), (uint64)(dataModificationTimestamp1), (uint32)(dataModificationTimestamp2), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.set-times-at
+//go:noescape
+func wasmimport_DescriptorSetTimesAt(self0 uint32, pathFlags0 uint32, path0 *uint8, path1 uint32, dataAccessTimestamp0 uint32, dataAccessTimestamp1 uint64, dataAccessTimestamp2 uint32, dataModificationTimestamp0 uint32, dataModificationTimestamp1 uint64, dataModificationTimestamp2 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// Stat represents the imported method "stat".
+//
+// Return the attributes of an open file or directory.
+//
+// Note: This is similar to `fstat` in POSIX, except that it does not return
+// device and inode information. For testing whether two descriptors refer to
+// the same underlying filesystem object, use `is-same-object`. To obtain
+// additional data that can be used do determine whether a file has been
+// modified, use `metadata-hash`.
+//
+// Note: This was called `fd_filestat_get` in earlier versions of WASI.
+//
+//	stat: func() -> result<descriptor-stat, error-code>
+//
+//go:nosplit
+func (self Descriptor) Stat() (result cm.OKResult[DescriptorStat, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorStat((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.stat
+//go:noescape
+func wasmimport_DescriptorStat(self0 uint32, result *cm.OKResult[DescriptorStat, ErrorCode])
+
+// StatAt represents the imported method "stat-at".
+//
+// Return the attributes of a file or directory.
+//
+// Note: This is similar to `fstatat` in POSIX, except that it does not
+// return device and inode information. See the `stat` description for a
+// discussion of alternatives.
+//
+// Note: This was called `path_filestat_get` in earlier versions of WASI.
+//
+//	stat-at: func(path-flags: path-flags, path: string) -> result<descriptor-stat,
+//	error-code>
+//
+//go:nosplit
+func (self Descriptor) StatAt(pathFlags PathFlags, path string) (result cm.OKResult[DescriptorStat, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	pathFlags0 := (uint32)(pathFlags)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorStatAt((uint32)(self0), (uint32)(pathFlags0), (*uint8)(path0), (uint32)(path1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.stat-at
+//go:noescape
+func wasmimport_DescriptorStatAt(self0 uint32, pathFlags0 uint32, path0 *uint8, path1 uint32, result *cm.OKResult[DescriptorStat, ErrorCode])
+
+// SymlinkAt represents the imported method "symlink-at".
+//
+// Create a symbolic link (also known as a "symlink").
+//
+// If `old-path` starts with `/`, the function fails with
+// `error-code::not-permitted`.
+//
+// Note: This is similar to `symlinkat` in POSIX.
+//
+//	symlink-at: func(old-path: string, new-path: string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) SymlinkAt(oldPath string, newPath string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	oldPath0, oldPath1 := cm.LowerString(oldPath)
+	newPath0, newPath1 := cm.LowerString(newPath)
+	wasmimport_DescriptorSymlinkAt((uint32)(self0), (*uint8)(oldPath0), (uint32)(oldPath1), (*uint8)(newPath0), (uint32)(newPath1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.symlink-at
+//go:noescape
+func wasmimport_DescriptorSymlinkAt(self0 uint32, oldPath0 *uint8, oldPath1 uint32, newPath0 *uint8, newPath1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// Sync represents the imported method "sync".
+//
+// Synchronize the data and metadata of a file to disk.
+//
+// This function succeeds with no effect if the file descriptor is not
+// opened for writing.
+//
+// Note: This is similar to `fsync` in POSIX.
+//
+//	sync: func() -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) Sync() (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorSync((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.sync
+//go:noescape
+func wasmimport_DescriptorSync(self0 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// SyncData represents the imported method "sync-data".
+//
+// Synchronize the data of a file to disk.
+//
+// This function succeeds with no effect if the file descriptor is not
+// opened for writing.
+//
+// Note: This is similar to `fdatasync` in POSIX.
+//
+//	sync-data: func() -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) SyncData() (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DescriptorSyncData((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.sync-data
+//go:noescape
+func wasmimport_DescriptorSyncData(self0 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// UnlinkFileAt represents the imported method "unlink-file-at".
+//
+// Unlink a filesystem object that is not a directory.
+//
+// Return `error-code::is-directory` if the path refers to a directory.
+// Note: This is similar to `unlinkat(fd, path, 0)` in POSIX.
+//
+//	unlink-file-at: func(path: string) -> result<_, error-code>
+//
+//go:nosplit
+func (self Descriptor) UnlinkFileAt(path string) (result cm.ErrResult[struct{}, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	path0, path1 := cm.LowerString(path)
+	wasmimport_DescriptorUnlinkFileAt((uint32)(self0), (*uint8)(path0), (uint32)(path1), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.unlink-file-at
+//go:noescape
+func wasmimport_DescriptorUnlinkFileAt(self0 uint32, path0 *uint8, path1 uint32, result *cm.ErrResult[struct{}, ErrorCode])
+
+// Write represents the imported method "write".
+//
+// Write to a descriptor, without using and updating the descriptor's offset.
+//
+// It is valid to write past the end of a file; the file is extended to the
+// extent of the write, with bytes between the previous end and the start of
+// the write set to zero.
+//
+// In the future, this may change to take a `stream<u8, error-code>`.
+//
+// Note: This is similar to `pwrite` in POSIX.
+//
+//	write: func(buffer: list<u8>, offset: filesize) -> result<filesize, error-code>
+//
+//go:nosplit
+func (self Descriptor) Write(buffer cm.List[uint8], offset FileSize) (result cm.OKResult[FileSize, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	buffer0, buffer1 := cm.LowerList(buffer)
+	offset0 := (uint64)(offset)
+	wasmimport_DescriptorWrite((uint32)(self0), (*uint8)(buffer0), (uint32)(buffer1), (uint64)(offset0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.write
+//go:noescape
+func wasmimport_DescriptorWrite(self0 uint32, buffer0 *uint8, buffer1 uint32, offset0 uint64, result *cm.OKResult[FileSize, ErrorCode])
+
+// WriteViaStream represents the imported method "write-via-stream".
+//
+// Return a stream for writing to a file, if available.
+//
+// May fail with an error-code describing why the file cannot be written.
+//
+// Note: This allows using `write-stream`, which is similar to `write` in
+// POSIX.
+//
+//	write-via-stream: func(offset: filesize) -> result<output-stream, error-code>
+//
+//go:nosplit
+func (self Descriptor) WriteViaStream(offset FileSize) (result cm.OKResult[streams.OutputStream, ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	offset0 := (uint64)(offset)
+	wasmimport_DescriptorWriteViaStream((uint32)(self0), (uint64)(offset0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]descriptor.write-via-stream
+//go:noescape
+func wasmimport_DescriptorWriteViaStream(self0 uint32, offset0 uint64, result *cm.OKResult[streams.OutputStream, ErrorCode])
+
+// DirectoryEntryStream represents the imported resource "wasi:filesystem/types@0.2.0#directory-entry-stream".
+//
+// A stream of directory entries.
+//
+//	resource directory-entry-stream
+type DirectoryEntryStream cm.Resource
+
+// ResourceDrop represents the imported resource-drop for resource "directory-entry-stream".
+//
+// Drops a resource handle.
+//
+//go:nosplit
+func (self DirectoryEntryStream) ResourceDrop() {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DirectoryEntryStreamResourceDrop((uint32)(self0))
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [resource-drop]directory-entry-stream
+//go:noescape
+func wasmimport_DirectoryEntryStreamResourceDrop(self0 uint32)
+
+// ReadDirectoryEntry represents the imported method "read-directory-entry".
+//
+// Read a single directory entry from a `directory-entry-stream`.
+//
+//	read-directory-entry: func() -> result<option<directory-entry>, error-code>
+//
+//go:nosplit
+func (self DirectoryEntryStream) ReadDirectoryEntry() (result cm.OKResult[cm.Option[DirectoryEntry], ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_DirectoryEntryStreamReadDirectoryEntry((uint32)(self0), &result)
+	return
+}
+
+//go:wasmimport wasi:filesystem/types@0.2.0 [method]directory-entry-stream.read-directory-entry
+//go:noescape
+func wasmimport_DirectoryEntryStreamReadDirectoryEntry(self0 uint32, result *cm.OKResult[cm.Option[DirectoryEntry], ErrorCode])
+
+// FilesystemErrorCode represents the imported function "filesystem-error-code".
 //
 // Attempts to extract a filesystem-related `error-code` from the stream
 // `error` provided.
@@ -1248,12 +1273,12 @@ const (
 //	filesystem-error-code: func(err: borrow<error>) -> option<error-code>
 //
 //go:nosplit
-func FilesystemErrorCode(err Error) cm.Option[ErrorCode] {
-	var result cm.Option[ErrorCode]
-	wasmimport_FilesystemErrorCode(err, &result)
-	return result
+func FilesystemErrorCode(err ioerror.Error) (result cm.Option[ErrorCode]) {
+	err0 := cm.Reinterpret[uint32](err)
+	wasmimport_FilesystemErrorCode((uint32)(err0), &result)
+	return
 }
 
 //go:wasmimport wasi:filesystem/types@0.2.0 filesystem-error-code
 //go:noescape
-func wasmimport_FilesystemErrorCode(err Error, result *cm.Option[ErrorCode])
+func wasmimport_FilesystemErrorCode(err0 uint32, result *cm.Option[ErrorCode])

@@ -2,27 +2,25 @@
 
 //go:build !wasip1
 
-// Package stderr represents the interface "wasi:cli/stderr@0.2.0".
+// Package stderr represents the imported interface "wasi:cli/stderr@0.2.0".
 package stderr
 
 import (
+	"github.com/ydnar/wasm-tools-go/cm"
 	"internal/wasi/io/v0.2.0/streams"
 )
 
-// OutputStream represents the resource "wasi:io/streams@0.2.0#output-stream".
-//
-// See [streams.OutputStream] for more information.
-type OutputStream = streams.OutputStream
-
-// GetStderr represents function "wasi:cli/stderr@0.2.0#get-stderr".
+// GetStderr represents the imported function "get-stderr".
 //
 //	get-stderr: func() -> output-stream
 //
 //go:nosplit
-func GetStderr() OutputStream {
-	return wasmimport_GetStderr()
+func GetStderr() (result streams.OutputStream) {
+	result0 := wasmimport_GetStderr()
+	result = cm.Reinterpret[streams.OutputStream]((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:cli/stderr@0.2.0 get-stderr
 //go:noescape
-func wasmimport_GetStderr() OutputStream
+func wasmimport_GetStderr() (result0 uint32)

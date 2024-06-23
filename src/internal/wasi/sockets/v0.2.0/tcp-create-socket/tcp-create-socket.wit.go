@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package tcpcreatesocket represents the interface "wasi:sockets/tcp-create-socket@0.2.0".
+// Package tcpcreatesocket represents the imported interface "wasi:sockets/tcp-create-socket@0.2.0".
 package tcpcreatesocket
 
 import (
@@ -11,27 +11,7 @@ import (
 	"internal/wasi/sockets/v0.2.0/tcp"
 )
 
-// ErrorCode represents the enum "wasi:sockets/network@0.2.0#error-code".
-//
-// See [network.ErrorCode] for more information.
-type ErrorCode = network.ErrorCode
-
-// IPAddressFamily represents the enum "wasi:sockets/network@0.2.0#ip-address-family".
-//
-// See [network.IPAddressFamily] for more information.
-type IPAddressFamily = network.IPAddressFamily
-
-// Network represents the resource "wasi:sockets/network@0.2.0#network".
-//
-// See [network.Network] for more information.
-type Network = network.Network
-
-// TCPSocket represents the resource "wasi:sockets/tcp@0.2.0#tcp-socket".
-//
-// See [tcp.TCPSocket] for more information.
-type TCPSocket = tcp.TCPSocket
-
-// CreateTCPSocket represents function "wasi:sockets/tcp-create-socket@0.2.0#create-tcp-socket".
+// CreateTCPSocket represents the imported function "create-tcp-socket".
 //
 // Create a new TCP socket.
 //
@@ -63,12 +43,12 @@ type TCPSocket = tcp.TCPSocket
 //	error-code>
 //
 //go:nosplit
-func CreateTCPSocket(addressFamily IPAddressFamily) cm.OKResult[TCPSocket, ErrorCode] {
-	var result cm.OKResult[TCPSocket, ErrorCode]
-	wasmimport_CreateTCPSocket(addressFamily, &result)
-	return result
+func CreateTCPSocket(addressFamily network.IPAddressFamily) (result cm.OKResult[tcp.TCPSocket, network.ErrorCode]) {
+	addressFamily0 := (uint32)(addressFamily)
+	wasmimport_CreateTCPSocket((uint32)(addressFamily0), &result)
+	return
 }
 
 //go:wasmimport wasi:sockets/tcp-create-socket@0.2.0 create-tcp-socket
 //go:noescape
-func wasmimport_CreateTCPSocket(addressFamily IPAddressFamily, result *cm.OKResult[TCPSocket, ErrorCode])
+func wasmimport_CreateTCPSocket(addressFamily0 uint32, result *cm.OKResult[tcp.TCPSocket, network.ErrorCode])

@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package insecureseed represents the interface "wasi:random/insecure-seed@0.2.0".
+// Package insecureseed represents the imported interface "wasi:random/insecure-seed@0.2.0".
 //
 // The insecure-seed interface for seeding hash-map DoS resistance.
 //
@@ -10,7 +10,7 @@
 // Windows.
 package insecureseed
 
-// InsecureSeed represents function "wasi:random/insecure-seed@0.2.0#insecure-seed".
+// InsecureSeed represents the imported function "insecure-seed".
 //
 // Return a 128-bit value that may contain a pseudo-random value.
 //
@@ -33,10 +33,9 @@ package insecureseed
 //	insecure-seed: func() -> tuple<u64, u64>
 //
 //go:nosplit
-func InsecureSeed() [2]uint64 {
-	var result [2]uint64
+func InsecureSeed() (result [2]uint64) {
 	wasmimport_InsecureSeed(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:random/insecure-seed@0.2.0 insecure-seed

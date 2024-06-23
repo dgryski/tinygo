@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package ipnamelookup represents the interface "wasi:sockets/ip-name-lookup@0.2.0".
+// Package ipnamelookup represents the imported interface "wasi:sockets/ip-name-lookup@0.2.0".
 package ipnamelookup
 
 import (
@@ -11,45 +11,27 @@ import (
 	"internal/wasi/sockets/v0.2.0/network"
 )
 
-// ErrorCode represents the enum "wasi:sockets/network@0.2.0#error-code".
-//
-// See [network.ErrorCode] for more information.
-type ErrorCode = network.ErrorCode
-
-// IPAddress represents the variant "wasi:sockets/network@0.2.0#ip-address".
-//
-// See [network.IPAddress] for more information.
-type IPAddress = network.IPAddress
-
-// Network represents the resource "wasi:sockets/network@0.2.0#network".
-//
-// See [network.Network] for more information.
-type Network = network.Network
-
-// Pollable represents the resource "wasi:io/poll@0.2.0#pollable".
-//
-// See [poll.Pollable] for more information.
-type Pollable = poll.Pollable
-
-// ResolveAddressStream represents the resource "wasi:sockets/ip-name-lookup@0.2.0#resolve-address-stream".
+// ResolveAddressStream represents the imported resource "wasi:sockets/ip-name-lookup@0.2.0#resolve-address-stream".
 //
 //	resource resolve-address-stream
 type ResolveAddressStream cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "resolve-address-stream".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self ResolveAddressStream) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_ResolveAddressStreamResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:sockets/ip-name-lookup@0.2.0 [resource-drop]resolve-address-stream
 //go:noescape
-func (self ResolveAddressStream) wasmimport_ResourceDrop()
+func wasmimport_ResolveAddressStreamResourceDrop(self0 uint32)
 
-// ResolveNextAddress represents method "resolve-next-address".
+// ResolveNextAddress represents the imported method "resolve-next-address".
 //
 // Returns the next address from the resolver.
 //
@@ -71,17 +53,17 @@ func (self ResolveAddressStream) wasmimport_ResourceDrop()
 //	resolve-next-address: func() -> result<option<ip-address>, error-code>
 //
 //go:nosplit
-func (self ResolveAddressStream) ResolveNextAddress() cm.OKResult[cm.Option[IPAddress], ErrorCode] {
-	var result cm.OKResult[cm.Option[IPAddress], ErrorCode]
-	self.wasmimport_ResolveNextAddress(&result)
-	return result
+func (self ResolveAddressStream) ResolveNextAddress() (result cm.OKResult[cm.Option[network.IPAddress], network.ErrorCode]) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_ResolveAddressStreamResolveNextAddress((uint32)(self0), &result)
+	return
 }
 
 //go:wasmimport wasi:sockets/ip-name-lookup@0.2.0 [method]resolve-address-stream.resolve-next-address
 //go:noescape
-func (self ResolveAddressStream) wasmimport_ResolveNextAddress(result *cm.OKResult[cm.Option[IPAddress], ErrorCode])
+func wasmimport_ResolveAddressStreamResolveNextAddress(self0 uint32, result *cm.OKResult[cm.Option[network.IPAddress], network.ErrorCode])
 
-// Subscribe represents method "subscribe".
+// Subscribe represents the imported method "subscribe".
 //
 // Create a `pollable` which will resolve once the stream is ready for I/O.
 //
@@ -91,15 +73,18 @@ func (self ResolveAddressStream) wasmimport_ResolveNextAddress(result *cm.OKResu
 //	subscribe: func() -> pollable
 //
 //go:nosplit
-func (self ResolveAddressStream) Subscribe() Pollable {
-	return self.wasmimport_Subscribe()
+func (self ResolveAddressStream) Subscribe() (result poll.Pollable) {
+	self0 := cm.Reinterpret[uint32](self)
+	result0 := wasmimport_ResolveAddressStreamSubscribe((uint32)(self0))
+	result = cm.Reinterpret[poll.Pollable]((uint32)(result0))
+	return
 }
 
 //go:wasmimport wasi:sockets/ip-name-lookup@0.2.0 [method]resolve-address-stream.subscribe
 //go:noescape
-func (self ResolveAddressStream) wasmimport_Subscribe() Pollable
+func wasmimport_ResolveAddressStreamSubscribe(self0 uint32) (result0 uint32)
 
-// ResolveAddresses represents function "wasi:sockets/ip-name-lookup@0.2.0#resolve-addresses".
+// ResolveAddresses represents the imported function "resolve-addresses".
 //
 // Resolve an internet host name to a list of IP addresses.
 //
@@ -126,12 +111,13 @@ func (self ResolveAddressStream) wasmimport_Subscribe() Pollable
 //	error-code>
 //
 //go:nosplit
-func ResolveAddresses(network_ Network, name string) cm.OKResult[ResolveAddressStream, ErrorCode] {
-	var result cm.OKResult[ResolveAddressStream, ErrorCode]
-	wasmimport_ResolveAddresses(network_, name, &result)
-	return result
+func ResolveAddresses(network_ network.Network, name string) (result cm.OKResult[ResolveAddressStream, network.ErrorCode]) {
+	network0 := cm.Reinterpret[uint32](network_)
+	name0, name1 := cm.LowerString(name)
+	wasmimport_ResolveAddresses((uint32)(network0), (*uint8)(name0), (uint32)(name1), &result)
+	return
 }
 
 //go:wasmimport wasi:sockets/ip-name-lookup@0.2.0 resolve-addresses
 //go:noescape
-func wasmimport_ResolveAddresses(network_ Network, name string, result *cm.OKResult[ResolveAddressStream, ErrorCode])
+func wasmimport_ResolveAddresses(network0 uint32, name0 *uint8, name1 uint32, result *cm.OKResult[ResolveAddressStream, network.ErrorCode])

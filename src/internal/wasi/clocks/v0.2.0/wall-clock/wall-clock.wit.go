@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package wallclock represents the interface "wasi:clocks/wall-clock@0.2.0".
+// Package wallclock represents the imported interface "wasi:clocks/wall-clock@0.2.0".
 //
 // WASI Wall Clock is a clock API intended to let users query the current
 // time. The name "wall" makes an analogy to a "clock on the wall", which
@@ -33,7 +33,7 @@ type DateTime struct {
 	Nanoseconds uint32
 }
 
-// Now represents function "wasi:clocks/wall-clock@0.2.0#now".
+// Now represents the imported function "now".
 //
 // Read the current value of the clock.
 //
@@ -52,17 +52,16 @@ type DateTime struct {
 // [Unix Time]: https://en.wikipedia.org/wiki/Unix_time
 //
 //go:nosplit
-func Now() DateTime {
-	var result DateTime
+func Now() (result DateTime) {
 	wasmimport_Now(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:clocks/wall-clock@0.2.0 now
 //go:noescape
 func wasmimport_Now(result *DateTime)
 
-// Resolution represents function "wasi:clocks/wall-clock@0.2.0#resolution".
+// Resolution represents the imported function "resolution".
 //
 // Query the resolution of the clock.
 //
@@ -71,10 +70,9 @@ func wasmimport_Now(result *DateTime)
 //	resolution: func() -> datetime
 //
 //go:nosplit
-func Resolution() DateTime {
-	var result DateTime
+func Resolution() (result DateTime) {
 	wasmimport_Resolution(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:clocks/wall-clock@0.2.0 resolution

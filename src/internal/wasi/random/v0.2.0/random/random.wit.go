@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package random represents the interface "wasi:random/random@0.2.0".
+// Package random represents the imported interface "wasi:random/random@0.2.0".
 //
 // WASI Random is a random data API.
 //
@@ -14,7 +14,7 @@ import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// GetRandomBytes represents function "wasi:random/random@0.2.0#get-random-bytes".
+// GetRandomBytes represents the imported function "get-random-bytes".
 //
 // Return `len` cryptographically-secure random or pseudo-random bytes.
 //
@@ -32,17 +32,17 @@ import (
 //	get-random-bytes: func(len: u64) -> list<u8>
 //
 //go:nosplit
-func GetRandomBytes(len_ uint64) cm.List[uint8] {
-	var result cm.List[uint8]
-	wasmimport_GetRandomBytes(len_, &result)
-	return result
+func GetRandomBytes(len_ uint64) (result cm.List[uint8]) {
+	len0 := (uint64)(len_)
+	wasmimport_GetRandomBytes((uint64)(len0), &result)
+	return
 }
 
 //go:wasmimport wasi:random/random@0.2.0 get-random-bytes
 //go:noescape
-func wasmimport_GetRandomBytes(len_ uint64, result *cm.List[uint8])
+func wasmimport_GetRandomBytes(len0 uint64, result *cm.List[uint8])
 
-// GetRandomU64 represents function "wasi:random/random@0.2.0#get-random-u64".
+// GetRandomU64 represents the imported function "get-random-u64".
 //
 // Return a cryptographically-secure random or pseudo-random `u64` value.
 //
@@ -52,10 +52,12 @@ func wasmimport_GetRandomBytes(len_ uint64, result *cm.List[uint8])
 //	get-random-u64: func() -> u64
 //
 //go:nosplit
-func GetRandomU64() uint64 {
-	return wasmimport_GetRandomU64()
+func GetRandomU64() (result uint64) {
+	result0 := wasmimport_GetRandomU64()
+	result = (uint64)((uint64)(result0))
+	return
 }
 
 //go:wasmimport wasi:random/random@0.2.0 get-random-u64
 //go:noescape
-func wasmimport_GetRandomU64() uint64
+func wasmimport_GetRandomU64() (result0 uint64)

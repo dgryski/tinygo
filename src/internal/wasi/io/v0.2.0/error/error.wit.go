@@ -2,14 +2,14 @@
 
 //go:build !wasip1
 
-// Package ioerror represents the interface "wasi:io/error@0.2.0".
+// Package ioerror represents the imported interface "wasi:io/error@0.2.0".
 package ioerror
 
 import (
 	"github.com/ydnar/wasm-tools-go/cm"
 )
 
-// Error represents the resource "wasi:io/error@0.2.0#error".
+// Error represents the imported resource "wasi:io/error@0.2.0#error".
 //
 // A resource which represents some error information.
 //
@@ -34,20 +34,22 @@ import (
 //	resource error
 type Error cm.Resource
 
-// ResourceDrop represents the Canonical ABI function "resource-drop".
+// ResourceDrop represents the imported resource-drop for resource "error".
 //
 // Drops a resource handle.
 //
 //go:nosplit
 func (self Error) ResourceDrop() {
-	self.wasmimport_ResourceDrop()
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_ErrorResourceDrop((uint32)(self0))
+	return
 }
 
 //go:wasmimport wasi:io/error@0.2.0 [resource-drop]error
 //go:noescape
-func (self Error) wasmimport_ResourceDrop()
+func wasmimport_ErrorResourceDrop(self0 uint32)
 
-// ToDebugString represents method "to-debug-string".
+// ToDebugString represents the imported method "to-debug-string".
 //
 // Returns a string that is suitable to assist humans in debugging
 // this error.
@@ -60,12 +62,12 @@ func (self Error) wasmimport_ResourceDrop()
 //	to-debug-string: func() -> string
 //
 //go:nosplit
-func (self Error) ToDebugString() string {
-	var result string
-	self.wasmimport_ToDebugString(&result)
-	return result
+func (self Error) ToDebugString() (result string) {
+	self0 := cm.Reinterpret[uint32](self)
+	wasmimport_ErrorToDebugString((uint32)(self0), &result)
+	return
 }
 
 //go:wasmimport wasi:io/error@0.2.0 [method]error.to-debug-string
 //go:noescape
-func (self Error) wasmimport_ToDebugString(result *string)
+func wasmimport_ErrorToDebugString(self0 uint32, result *string)

@@ -2,7 +2,7 @@
 
 //go:build !wasip1
 
-// Package terminalstdout represents the interface "wasi:cli/terminal-stdout@0.2.0".
+// Package terminalstdout represents the imported interface "wasi:cli/terminal-stdout@0.2.0".
 //
 // An interface providing an optional `terminal-output` for stdout as a
 // link-time authority.
@@ -13,12 +13,7 @@ import (
 	terminaloutput "internal/wasi/cli/v0.2.0/terminal-output"
 )
 
-// TerminalOutput represents the resource "wasi:cli/terminal-output@0.2.0#terminal-output".
-//
-// See [terminaloutput.TerminalOutput] for more information.
-type TerminalOutput = terminaloutput.TerminalOutput
-
-// GetTerminalStdout represents function "wasi:cli/terminal-stdout@0.2.0#get-terminal-stdout".
+// GetTerminalStdout represents the imported function "get-terminal-stdout".
 //
 // If stdout is connected to a terminal, return a `terminal-output` handle
 // allowing further interaction with it.
@@ -26,12 +21,11 @@ type TerminalOutput = terminaloutput.TerminalOutput
 //	get-terminal-stdout: func() -> option<terminal-output>
 //
 //go:nosplit
-func GetTerminalStdout() cm.Option[TerminalOutput] {
-	var result cm.Option[TerminalOutput]
+func GetTerminalStdout() (result cm.Option[terminaloutput.TerminalOutput]) {
 	wasmimport_GetTerminalStdout(&result)
-	return result
+	return
 }
 
 //go:wasmimport wasi:cli/terminal-stdout@0.2.0 get-terminal-stdout
 //go:noescape
-func wasmimport_GetTerminalStdout(result *cm.Option[TerminalOutput])
+func wasmimport_GetTerminalStdout(result *cm.Option[terminaloutput.TerminalOutput])
