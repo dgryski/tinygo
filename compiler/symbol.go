@@ -360,7 +360,7 @@ func (c *compilerContext) checkWasmImport(f *ssa.Function, pragma string) {
 		c.addError(f.Signature.Results().At(1).Pos(), fmt.Sprintf("%s: too many return values", pragma))
 	} else if f.Signature.Results().Len() == 1 {
 		result := f.Signature.Results().At(0)
-		if !isValidWasmType(result.Type(), true) {
+		if !isValidWasmType(result.Type(), false) {
 			c.addError(result.Pos(), fmt.Sprintf("%s: unsupported result type %s", pragma, result.Type().String()))
 		}
 	}
@@ -373,30 +373,42 @@ func (c *compilerContext) checkWasmImport(f *ssa.Function, pragma string) {
 	}
 }
 
-// Check whether the type maps directly to a WebAssembly type, according to:
-// https://github.com/golang/go/issues/59149
+// Check whether the type maps directly to a WebAssembly type.
 //
-// Update: this reflects the relaxed type restrictions proposed here:
+// This reflects the relaxed type restrictions proposed here (except for structs.HostLayout):
 // https://github.com/golang/go/issues/66984
-func isValidWasmType(typ types.Type, isReturn bool) bool {
+//
+// This previously reflected the additional restrictions documented here:
+// https://github.com/golang/go/issues/59149
+func isValidWasmType(typ types.Type, isPointerOrField bool) bool {
 	switch typ := typ.Underlying().(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.Bool:
 			return true
-		case types.Int8, types.Uint8, types.Int16, types.Uint16, types.Int32, types.Uint32, types.Int64, types.Uint64:
+		case types.Int, types.Uint, types.Int8, types.Uint8, types.Int16, types.Uint16, types.Int32, types.Uint32, types.Int64, types.Uint64:
 			return true
 		case types.Float32, types.Float64:
 			return true
 		case types.Uintptr, types.UnsafePointer:
 			return true
 		case types.String:
-			return true
+			return isPointerOrField
 		}
+	case *types.Array:
+		return isPointerOrField && isValidWasmType(typ.Elem(), true)
 	case *types.Struct:
+		if !isPointerOrField {
+			return false
+		}
+		for i := 0; i < typ.NumFields(); i++ {
+			if !isValidWasmType(typ.Field(i).Type(), true) {
+				return false
+			}
+		}
 		return true
 	case *types.Pointer:
-		return isValidWasmType(typ.Elem(), isReturn)
+		return isValidWasmType(typ.Elem(), true)
 	}
 	return false
 }
