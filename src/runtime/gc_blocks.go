@@ -141,16 +141,12 @@ type headCache struct {
 }
 
 func (c *headCache) bsearch(b gcBlock) int {
-	low, high := 0, c.valid
-	for low < high {
-		mid := low + (high-low)/2
-		if c.entries[mid].end < b {
-			low = mid + 1
-		} else {
-			high = mid
+	for i := 0; i < c.valid; i++ {
+		if c.entries[i].start <= b && b <= c.entries[i].end {
+			return i
 		}
 	}
-	return low
+	return c.valid
 }
 
 func (c *headCache) insert(b, end gcBlock) {
@@ -158,7 +154,7 @@ func (c *headCache) insert(b, end gcBlock) {
 	e := headCacheEntry{b, end}
 	n := c.bsearch(e.start)
 
-	if n < c.valid && c.entries[n].start <= e.start && e.start <= c.entries[n].end {
+	if n < c.valid {
 		// our allocation has same start, but later end
 		if c.entries[n].end < e.end {
 			c.entries[n].end = e.end
@@ -173,35 +169,15 @@ func (c *headCache) insert(b, end gcBlock) {
 
 	// entry needs to be inserted at slot `n`; we have space to expand.
 	if c.valid < headCacheSize {
-		if n == c.valid {
-			c.entries[n] = e
-		} else {
-			// shift everything along and insert
-			copy(c.entries[n+1:], c.entries[n:c.valid])
-			c.entries[n] = e
-		}
+		// expand valid entries
+		c.entries[c.valid] = e
 		c.valid++
 		return
 	}
 
 	// randomly evict something
 	remove := int(fastrand() % headCacheSize)
-
-	if n == remove {
-		// luckily evicting the spot we need to go
-		c.entries[n] = e
-		return
-	}
-
-	// Two cases: remove < n or n < remove. We only need to move the elements in between
-	if remove < n {
-		// 0 ..... remove .... n .... size <-- shift down to make space, overwriting `remove`
-		copy(c.entries[remove:n], c.entries[remove+1:n+1])
-	} else {
-		// 0 ..... n .... remove .... size <-- shift up to make space, overwriting `remove`
-		copy(c.entries[n+1:remove+1], c.entries[n:remove])
-	}
-	c.entries[n] = e
+	c.entries[remove] = e
 }
 
 var headCacheCalls int
@@ -212,7 +188,7 @@ func (c *headCache) lookup(b gcBlock) (entry *headCacheEntry, ok bool) {
 
 	headCacheCalls++
 
-	if n < c.valid && c.entries[n].start <= b && b <= c.entries[n].end {
+	if n < c.valid {
 		headCacheHits++
 		return &c.entries[n], true
 	}
