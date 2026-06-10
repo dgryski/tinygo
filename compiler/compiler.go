@@ -84,7 +84,6 @@ type compilerContext struct {
 	funcPtrType      llvm.Type // pointer in function address space (1 for AVR, 0 elsewhere)
 	funcPtrAddrSpace int
 	uintptrType      llvm.Type
-	nocaptureAttr    llvm.Attribute
 	program          *ssa.Program
 	diagnostics      []error
 	functionInfos    map[*ssa.Function]functionInfo
@@ -136,14 +135,21 @@ func newCompilerContext(moduleName string, machine llvm.TargetMachine, config *C
 	c.funcPtrType = dummyFunc.Type()
 	dummyFunc.EraseFromParentAsFunction()
 
-	// The attribute "nocapture" changed to "captures(none)" in LLVM 21.
-	if llvmutil.Version() < 21 {
-		c.nocaptureAttr = c.ctx.CreateEnumAttribute(llvm.AttributeKindID("nocapture"), 0)
-	} else {
-		c.nocaptureAttr = c.ctx.CreateEnumAttribute(llvm.AttributeKindID("captures"), 0)
-	}
-
 	return c
+}
+
+// The attribute "nocapture" changed to "captures(none)" in LLVM 21.
+func (c *compilerContext) markNoCapture(ssaFn *ssa.Function, fn llvm.Value, argIndex int) {
+	fmt.Println("mark no capture:", ssaFn)
+	if llvmutil.Version() < 21 {
+		attr := c.ctx.CreateEnumAttribute(llvm.AttributeKindID("nocapture"), 0)
+		fn.AddAttributeAtIndex(argIndex, attr)
+	} else {
+		fmt.Println(fn, "params count", fn.ParamsCount(), "arg", argIndex)
+		arg := fn.Param(argIndex)
+		fmt.Println("arg;", arg)
+		arg.AddTargetDependentFunctionAttr("captures", "none")
+	}
 }
 
 // Dispose everything related to the context, _except_ for the IR module (and
