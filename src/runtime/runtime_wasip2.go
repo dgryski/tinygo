@@ -31,22 +31,11 @@ func os_runtime_args() []string {
 
 //export cabi_realloc
 func cabi_realloc(ptr, oldsize, align, newsize unsafe.Pointer) unsafe.Pointer {
-	size := uintptr(newsize)
-	if size == 0 {
-		freeManual(ptr)
-		return nil
-	}
-
-	newPtr := allocManual(size)
-	if ptr != nil {
-		copySize := uintptr(oldsize)
-		if copySize > size {
-			copySize = size
-		}
-		memcpy(newPtr, ptr, copySize)
-		freeManual(ptr)
-	}
-	return newPtr
+	// Use libc_realloc (not the GC-internal realloc) so this allocation is
+	// tracked in the same allocs map as malloc/free: wasi-libc's own C code
+	// (e.g. wasip2_string_free) takes ownership of buffers allocated here
+	// during canonical-ABI lifting and later frees them with a plain free().
+	return libc_realloc(ptr, uintptr(newsize))
 }
 
 func ticksToNanoseconds(ticks timeUnit) int64 {
