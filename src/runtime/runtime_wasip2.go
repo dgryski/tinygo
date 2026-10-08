@@ -6,17 +6,19 @@ import (
 	"unsafe"
 
 	"internal/wasi/cli/v0.2.0/environment"
-	wasiclirun "internal/wasi/cli/v0.2.0/run"
 	monotonicclock "internal/wasi/clocks/v0.2.0/monotonic-clock"
 
 	"internal/cm"
 )
 
-func init() {
-	wasiclirun.Exports.Run = func() cm.BoolResult {
-		callMain()
-		return false
-	}
+// Entry point for the wasi:cli/run export. The version is the one that
+// wasi-libc uses, see lib/wasi-libc/wasi/p2/wit. The result is true for an
+// error.
+//
+//go:wasmexport wasi:cli/run@0.2.12#run
+func wasiCliRun() cm.BoolResult {
+	callMain()
+	return false
 }
 
 var args []string
