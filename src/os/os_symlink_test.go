@@ -1,4 +1,4 @@
-//go:build !windows && !baremetal && !js && !wasip1 && !wasip2
+//go:build !windows && !baremetal && !js && (!wasip1 || wasip3) && !wasip2 && !wasip3
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
