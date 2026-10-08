@@ -337,6 +337,13 @@ tinygo-test-wasip2-fast:
 	$(TINYGO) test -target=wasip2 $(TEST_SKIP_FLAG) $(filter-out $(TEST_PACKAGES_ALLOCS),$(TEST_PACKAGES_FAST_WASIP2)) ./tests/runtime_wasi
 	$(call run-tinygo-alloc-tests,$(TEST_PACKAGES_FAST_WASIP2),-target=wasip2)
 
+tinygo-test-wasip3-slow:
+	$(TINYGO) test -target=wasip3 $(TEST_SKIP_FLAG) $(filter-out $(TEST_PACKAGES_ALLOCS),$(TEST_PACKAGES_SLOW))
+	$(call run-tinygo-alloc-tests,$(TEST_PACKAGES_SLOW),-target=wasip3)
+tinygo-test-wasip3-fast:
+	$(TINYGO) test -target=wasip3 $(TEST_SKIP_FLAG) $(filter-out $(TEST_PACKAGES_ALLOCS),$(TEST_PACKAGES_FAST_WASIP2)) ./tests/runtime_wasi
+	$(call run-tinygo-alloc-tests,$(TEST_PACKAGES_FAST_WASIP2),-target=wasip3)
+
 tinygo-test-wasip2-sum-slow:
 	TINYGO=$(TINYGO) \
 	TARGET=wasip2 \

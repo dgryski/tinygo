@@ -132,7 +132,10 @@ func Load(config *compileopts.Config, inputPkg string, typeChecker types.Config)
 	}
 
 	// List the dependencies of this package, in raw JSON format.
-	extraArgs := []string{"-json", "-deps", "-e"}
+	// Only request the fields in PackageJSON. The fields that tell whether a
+	// package is stale make "go list" reject GOOS/GOARCH pairs that Go does not
+	// support, such as the linux/wasm of the wasip2 and wasip3 targets.
+	extraArgs := []string{"-json=Dir,ImportPath,Name,ForTest,Root,Module,GoFiles,CgoFiles,CFiles,EmbedFiles,Imports,ImportMap,Error", "-deps", "-e"}
 	if config.TestConfig.CompileTestBinary {
 		extraArgs = append(extraArgs, "-test")
 	}

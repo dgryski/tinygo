@@ -30,6 +30,7 @@ var libVersions = map[string]int{
 	"wasmbuiltins":     1,
 	"wasi-libc":        1,
 	"wasi-libc-wasip2": 1,
+	"wasi-libc-wasip3": 1,
 }
 
 // Config keeps all configuration affecting the build in a single struct.

@@ -216,7 +216,7 @@ func trimPathDWARFFiles(t *testing.T, filename, goos string) []string {
 			t.Fatal(parseErr)
 		}
 		data, err = file.DWARF()
-	case "wasip1", "wasip2", "js":
+	case "wasip1", "wasip2", "wasip3", "js":
 		file, parseErr := wasm.Parse(f)
 		if parseErr != nil {
 			t.Fatal(parseErr)
@@ -597,6 +597,11 @@ func TestBuild(t *testing.T) {
 			runPlatTests(optionsFromTarget("wasip2", sema), tests, t)
 			runGCLivenessTest(optionsFromTarget("wasip2", sema), t)
 		})
+		t.Run("WASIp3", func(t *testing.T) {
+			t.Parallel()
+			runPlatTests(optionsFromTarget("wasip3", sema), tests, t)
+			runGCLivenessTest(optionsFromTarget("wasip3", sema), t)
+		})
 	}
 
 	if runtime.GOOS == "linux" {
@@ -748,7 +753,7 @@ func runPlatTests(options compileopts.Options, tests []string, t *testing.T) {
 			default:
 			}
 		}
-		if options.Target == "wasip2" {
+		if options.Target == "wasip2" || options.Target == "wasip3" {
 			switch name {
 			case "cgo/":
 				// waisp2 use our own libc; cgo tests fail

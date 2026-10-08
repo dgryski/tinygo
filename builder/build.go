@@ -179,8 +179,11 @@ func Build(pkgName, outpath, tmpdir string, config *compileopts.Config) (BuildRe
 		libcDependencies = append(libcDependencies, libcJob)
 	case "wasi-libc":
 		lib := libWasiLibc
-		if slices.Contains(config.BuildTags(), "wasip2") {
+		switch {
+		case slices.Contains(config.BuildTags(), "wasip2"):
 			lib = libWasiLibcWasip2
+		case slices.Contains(config.BuildTags(), "wasip3"):
+			lib = libWasiLibcWasip3
 		}
 		libcJob, unlock, err := lib.load(config, tmpdir)
 		if err != nil {
