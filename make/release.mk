@@ -125,7 +125,8 @@ endif
 	@cp -rp lib/wasi-libc/libc-top-half/sources                     build/release/tinygo/lib/wasi-libc/libc-top-half
 	@cp -rp lib/wasi-libc-wasip2-stub.c                             build/release/tinygo/lib
 	@cp -rp lib/wasi-libc-wasip3-stub.c                             build/release/tinygo/lib
-	@mkdir -p build/release/tinygo/lib/wasi-libc/wasi/p3
+	@mkdir -p build/release/tinygo/lib/wasi-libc/wasi/p2 build/release/tinygo/lib/wasi-libc/wasi/p3
+	@cp -rp lib/wasi-libc/wasi/p2/wit                               build/release/tinygo/lib/wasi-libc/wasi/p2
 	@cp -rp lib/wasi-libc/wasi/p3/wit                               build/release/tinygo/lib/wasi-libc/wasi/p3
 	@cp -rp lib/wasi-cli/wit                                        build/release/tinygo/lib/wasi-cli/wit
 	@cp -rp lib/xtensa/include                                      build/release/tinygo/lib/xtensa
