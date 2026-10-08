@@ -1,4 +1,4 @@
-//go:build wasm && !wasip1
+//go:build wasm && (!wasip1 || wasip3)
 
 package runtime
 
