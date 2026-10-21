@@ -36,6 +36,7 @@ type runner struct {
 	timeout           time.Duration
 	maxLoopIterations int
 	callsExecuted     uint64
+	deferDepth        int    // number of active defer frames set up by the interpreter
 	xorshift32State   uint32 // state for runtime.fastrand
 	xorshift64State   uint64 // state for runtime.fastrand64
 }

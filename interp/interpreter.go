@@ -157,6 +157,12 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 			}
 		}
 		if isRuntimeInst {
+			if inst.opcode == llvm.Call && strings.HasPrefix(inst.name, "setjmp") && !inst.llvmInst.CalledValue().IsAInlineAsm().IsNil() {
+				// The setjmp-like checkpoint of a defer frame. It always
+				// returns zero because there are no panics at compile time.
+				locals[inst.localIndex] = makeLiteralInt(0, inst.llvmInst.Type().IntTypeWidth())
+				continue
+			}
 			err := r.runAtRuntime(fn, inst, locals, &mem, indent)
 			if err != nil {
 				return nil, mem, err
@@ -279,7 +285,7 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 				// which case this call won't even get to this point but will
 				// already be emitted in initAll.
 				continue
-			case strings.HasPrefix(callFn.name, "runtime.print") || callFn.name == "runtime._panic" || callFn.name == "runtime.hashmapGet" || callFn.name == "runtime.hashmapInterfaceHash" ||
+			case strings.HasPrefix(callFn.name, "runtime.print") || callFn.name == "runtime._panic" || callFn.name == "runtime.hashmapInterfaceHash" ||
 				callFn.name == "os.runtime_args" || callFn.name == "internal/task.start" || callFn.name == "internal/task.Current" ||
 				callFn.name == "time.startTimer" || callFn.name == "time.stopTimer" || callFn.name == "time.resetTimer":
 				// These functions should be run at runtime. Specifically:
@@ -300,6 +306,22 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 				if err != nil {
 					return nil, mem, err
 				}
+			case callFn.name == "runtime.setupDeferFrame":
+				// Defer frames only matter when panicking, which is not
+				// possible at compile time.
+				r.deferDepth++
+			case callFn.name == "runtime.destroyDeferFrame":
+				r.deferDepth--
+			case callFn.name == "runtime.clearUnwind":
+				// Nothing is unwinding at compile time.
+			case callFn.name == "llvm.stacksave.p0" || callFn.name == "llvm.stacksave":
+				locals[inst.localIndex] = makeLiteralInt(0, int(r.pointerSize)*8)
+			case callFn.name == "runtime.unwindPending":
+				locals[inst.localIndex] = literalValue{uint8(0)}
+			case callFn.name == "runtime._recover":
+				// Nothing is panicking at compile time.
+				size := r.targetData.TypeAllocSize(inst.llvmInst.Type())
+				locals[inst.localIndex] = newRawValue(uint32(size))
 			case callFn.name == "internal/task.Pause":
 				// Task scheduling isn't possible at compile time.
 				return nil, mem, r.errorAt(inst, errUnsupportedRuntimeInst)
@@ -470,6 +492,51 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 					dstObj.buffer = dstBuf
 					mem.put(dst.index(), dstObj)
 				}
+			case strings.HasPrefix(callFn.name, "llvm.memset.p0"):
+				// Fill a block of memory with a byte value.
+				if operands[4].(literalValue).value.(uint8) != 0 {
+					// This is a volatile memset.
+					err := r.runAtRuntime(fn, inst, locals, &mem, indent)
+					if err != nil {
+						return nil, mem, err
+					}
+					continue
+				}
+				value, err := operands[2].Uint(r)
+				if err != nil {
+					return nil, mem, r.errorAt(inst, err)
+				}
+				nBytes, err := operands[3].Uint(r)
+				if err != nil {
+					return nil, mem, r.errorAt(inst, err)
+				}
+				if nBytes != 0 {
+					dst, err := operands[1].asPointer(r)
+					if err != nil {
+						return nil, mem, r.errorAt(inst, err)
+					}
+					if mem.hasExternalLoadOrStore(dst) {
+						err := r.runAtRuntime(fn, inst, locals, &mem, indent)
+						if err != nil {
+							return nil, mem, err
+						}
+						continue
+					}
+					dstObj := mem.getWritable(dst.index())
+					if dstObj.buffer == nil {
+						err := r.runAtRuntime(fn, inst, locals, &mem, indent)
+						if err != nil {
+							return nil, mem, err
+						}
+						continue
+					}
+					dstBuf := dstObj.buffer.asRawValue(r)
+					for i := range dstBuf.buf[dst.offset():][:nBytes] {
+						dstBuf.buf[int(dst.offset())+i] = uint64(uint8(value))
+					}
+					dstObj.buffer = dstBuf
+					mem.put(dst.index(), dstObj)
+				}
 			case callFn.name == "runtime.typeAssert":
 				// This function must be implemented manually as it is normally
 				// implemented by the interface lowering pass.
@@ -575,7 +642,9 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 					}
 					fmt.Fprintln(os.Stderr, indent+"call:", callFn.name+"("+strings.Join(argStrings, ", ")+")")
 				}
+				deferDepth := r.deferDepth
 				retval, callMem, callErr := r.run(callFn, operands[1:], &mem, indent+"    ")
+				r.deferDepth = deferDepth
 				if callErr != nil {
 					if isRecoverableError(callErr.Err) {
 						// This error can be recovered by doing the call at
@@ -609,7 +678,7 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 				return nil, mem, r.errorAt(inst, err)
 			}
 			size := operands[1].(literalValue).value.(uint64)
-			if inst.llvmInst.IsVolatile() || inst.llvmInst.Ordering() != llvm.AtomicOrderingNotAtomic || mem.hasExternalStore(ptr) {
+			if (inst.llvmInst.IsVolatile() && !mem.isInternalGlobal(ptr)) || inst.llvmInst.Ordering() != llvm.AtomicOrderingNotAtomic || mem.hasExternalStore(ptr) {
 				// If there could be an external store (for example, because a
 				// pointer to the object was passed to a function that could not
 				// be interpreted at compile time) then the load must be done at
@@ -639,7 +708,7 @@ func (r *runner) run(fn *function, params []value, parentMem *memoryView, indent
 			if err != nil {
 				return nil, mem, r.errorAt(inst, err)
 			}
-			if inst.llvmInst.IsVolatile() || inst.llvmInst.Ordering() != llvm.AtomicOrderingNotAtomic || mem.hasExternalLoadOrStore(ptr) {
+			if (inst.llvmInst.IsVolatile() && !mem.isInternalGlobal(ptr)) || inst.llvmInst.Ordering() != llvm.AtomicOrderingNotAtomic || mem.hasExternalLoadOrStore(ptr) {
 				err := r.runAtRuntime(fn, inst, locals, &mem, indent)
 				if err != nil {
 					return nil, mem, err
@@ -1091,6 +1160,11 @@ func (r *runner) runAtRuntime(fn *function, inst instruction, locals []value, me
 	var result llvm.Value
 	switch inst.opcode {
 	case llvm.Call:
+		if r.deferDepth > 0 {
+			// The call could panic. Moving it out of the function would lose
+			// the deferred calls that recover from it.
+			return r.errorAt(inst, errUnsupportedRuntimeInst)
+		}
 		llvmFn := operands[len(operands)-1]
 		args := operands[:len(operands)-1]
 		for _, op := range operands {

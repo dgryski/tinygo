@@ -255,6 +255,14 @@ func (mv *memoryView) hasExternalStore(v pointerValue) bool {
 	return obj.marked >= 2 && !obj.constant
 }
 
+// isInternalGlobal returns true if the pointer points into a global with
+// internal linkage. Hardware can't access these, so volatile only affects
+// optimizations.
+func (mv *memoryView) isInternalGlobal(v pointerValue) bool {
+	global := mv.get(v.index()).llvmGlobal
+	return !global.IsNil() && global.Linkage() == llvm.InternalLinkage
+}
+
 // get returns an object that can only be read from, as it may return an object
 // of a parent view.
 func (mv *memoryView) get(index uint32) object {
