@@ -1744,7 +1744,8 @@ func getListOfPackages(pkgs []string, options *compileopts.Options) ([]loader.Pa
 	if err != nil {
 		return nil, err
 	}
-	cmd, err := loader.List(config, []string{"-json"}, pkgs)
+	// Only request the fields in PackageJSON, as in loader.load.
+	cmd, err := loader.List(config, []string{"-json=Dir,ImportPath,Name,ForTest,Root,Standard,DepOnly,Module,GoFiles,CgoFiles,CFiles,CXXFiles,EmbedFiles,Imports,ImportMap,Error"}, pkgs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run `go list`: %w", err)
 	}
