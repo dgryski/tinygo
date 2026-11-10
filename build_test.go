@@ -42,6 +42,7 @@ func TestBuild(t *testing.T) {
 		"go1.21.go",
 		"go1.22/",
 		"go1.23/",
+		"goroutine-waves.go",
 		"goroutines.go",
 		"init.go",
 		"init_multi.go",
@@ -67,6 +68,7 @@ func TestBuild(t *testing.T) {
 		"stringfrombytes.go",
 		"stringfrombytes_stress.go",
 		"structs.go",
+		"sync-contention.go",
 		"testing.go",
 		"timers.go",
 		"typealias.go",
@@ -93,7 +95,7 @@ func TestBuild(t *testing.T) {
 		runPlatTests(hostOptions, tests, t)
 		for _, name := range gcStackNativeTests {
 			t.Run(name, func(t *testing.T) {
-				if runtime.GOOS == "windows" && (name == "gcstacks-stale.go" || name == "gcstacks-blocked.go") {
+				if runtime.GOOS == "windows" && (name == "gcstacks-stale.go" || name == "gcstacks-sleepers.go" || name == "gcstacks-blocked.go") {
 					t.Skip("boehm scans whole goroutine stacks with the tasks scheduler")
 				}
 				t.Parallel()
@@ -365,6 +367,7 @@ func TestBuild(t *testing.T) {
 			t.Parallel()
 			runPlatTests(optionsFromTarget("wasip3", sema), tests, t)
 			runGCLivenessTest(optionsFromTarget("wasip3", sema), t)
+			runGCStackTests(t, optionsFromTarget("wasip3", sema))
 		})
 	}
 
@@ -440,6 +443,7 @@ var gcStackNativeTests = []string{
 	"gcstacks-exit.go",
 	"gcstacks-panics.go",
 	"gcstacks-queues.go",
+	"gcstacks-sleepers.go",
 	"gcstacks-stale.go",
 }
 
@@ -459,6 +463,9 @@ func runGCStackTests(t *testing.T, options compileopts.Options) {
 	t.Helper()
 	for _, name := range gcStackTests {
 		t.Run(name, func(t *testing.T) {
+			if options.Target == "wasip3" && (name == "gcstacks-blocked.go" || name == "gcstacks-soak.go") {
+				t.Skip("each goroutine is a thread, which the GC cannot free while it is blocked")
+			}
 			t.Parallel()
 			runTest(name, options, t, nil, nil)
 		})
