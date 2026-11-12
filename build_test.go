@@ -68,6 +68,7 @@ func TestBuild(t *testing.T) {
 		"stringfrombytes_stress.go",
 		"structs.go",
 		"testing.go",
+		"timer_node_reuse_gc.go",
 		"timers.go",
 		"typealias.go",
 		"zeroalloc.go",
