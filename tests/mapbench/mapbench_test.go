@@ -9,90 +9,158 @@ type compositeKey struct {
 
 var intSink int
 
+const getKeys = 128
+
+// Get benchmarks look up every key in turn.
+
 func BenchmarkMapStringShortGet(b *testing.B) {
-	m := make(map[string]int, 100)
-	for i := range 100 {
-		m[string(rune('A'+i%26))+string(rune('a'+i/26))] = i
+	keys := wordKeys(getKeys)
+	m := make(map[string]int, len(keys))
+	for i, k := range keys {
+		m[k] = i
 	}
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		intSink += m["Qa"]
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
 	}
 }
 
 func BenchmarkMapStringLongGet(b *testing.B) {
-	m := make(map[string]int, 100)
-	for i := range 100 {
-		s := "this-is-a-longer-key-for-testing-"
-		for j := range 3 {
-			s += string(rune('A' + (i+j)%26))
-		}
-		m[s] = i
+	words := wordKeys(getKeys)
+	keys := make([]string, len(words))
+	m := make(map[string]int, len(words))
+	for i, w := range words {
+		keys[i] = "this-is-a-longer-key-for-testing-" + w
+		m[keys[i]] = i
 	}
-	key := "this-is-a-longer-key-for-testing-ABC"
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		intSink += m[key]
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
 	}
 }
 
-func BenchmarkMapCompositeGet(b *testing.B) {
-	m := make(map[compositeKey]int, 100)
-	for i := range 100 {
-		m[compositeKey{S: string(rune('A'+i%26)) + string(rune('a'+i/26)), N: int32(i)}] = i
+func BenchmarkMapHeaderGet(b *testing.B) {
+	keys := headerKeys(getKeys)
+	m := make(map[string]int, len(keys))
+	for i, k := range keys {
+		m[k] = i
 	}
-	key := compositeKey{S: "Qa", N: 42}
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		intSink += m[key]
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
+	}
+}
+
+func compositeKeys(n int) []compositeKey {
+	ws := wordKeys(n)
+	ns := randInts(n)
+	keys := make([]compositeKey, n)
+	for i := range keys {
+		keys[i] = compositeKey{S: ws[i], N: int32(ns[i])}
+	}
+	return keys
+}
+
+func BenchmarkMapCompositeGet(b *testing.B) {
+	keys := compositeKeys(getKeys)
+	m := make(map[compositeKey]int, len(keys))
+	for i, k := range keys {
+		m[k] = i
+	}
+	b.ResetTimer()
+	j := 0
+	for i := 0; i < b.N; i++ {
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
 	}
 }
 
 func BenchmarkMapIntGet(b *testing.B) {
-	m := make(map[int]int, 100)
-	for i := range 100 {
-		m[i*7] = i
+	keys := randInts(getKeys)
+	m := make(map[int]int, len(keys))
+	for i, k := range keys {
+		m[k] = i
 	}
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		intSink += m[42]
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
 	}
 }
 
+const setKeys = 1024
+
+// Set benchmarks refill a cleared map with setKeys keys per iteration.
+
 func BenchmarkMapCompositeSet(b *testing.B) {
-	m := make(map[compositeKey]int, b.N)
+	keys := compositeKeys(setKeys)
+	m := make(map[compositeKey]int, len(keys))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m[compositeKey{S: "key", N: int32(i)}] = i
+		clear(m)
+		for j, k := range keys {
+			m[k] = j
+		}
 	}
 }
 
 type bigKey [256]byte
 
+func bigKeys(n int) []bigKey {
+	rng := splitmix64(99)
+	keys := make([]bigKey, n)
+	for i := range keys {
+		for j := 0; j < len(keys[i]); j += 8 {
+			v := rng.next()
+			for k := 0; k < 8; k++ {
+				keys[i][j+k] = byte(v >> (8 * k))
+			}
+		}
+	}
+	return keys
+}
+
 func BenchmarkMapBigKeyGet(b *testing.B) {
-	m := make(map[bigKey]int, 100)
-	for i := range 100 {
-		var k bigKey
-		k[0] = byte(i)
+	keys := bigKeys(getKeys)
+	m := make(map[bigKey]int, len(keys))
+	for i, k := range keys {
 		m[k] = i
 	}
-	var k bigKey
-	k[0] = 42
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		intSink += m[k]
+		intSink += m[keys[j]]
+		if j++; j == len(keys) {
+			j = 0
+		}
 	}
 }
 
 func BenchmarkMapBigKeySet(b *testing.B) {
-	m := make(map[bigKey]int, b.N)
+	keys := bigKeys(setKeys)
+	m := make(map[bigKey]int, len(keys))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var k bigKey
-		k[0] = byte(i)
-		k[1] = byte(i >> 8)
-		k[2] = byte(i >> 16)
-		k[3] = byte(i >> 24)
-		m[k] = i
+		clear(m)
+		for j := range keys {
+			m[keys[j]] = j
+		}
 	}
 }
