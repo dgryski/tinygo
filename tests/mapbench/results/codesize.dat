@@ -1,0 +1,5 @@
+# target fnv leveldb tsip32 tsip64 sip13 sip24 (bytes of code)
+"M4 (Uno R4)" 40 80 248 720 716 1028
+"M0+ (XIAO SAMD21)" 44 100 304 736 820 1156
+"M33 (Pico 2 W)" 40 80 248 720 716 1028
+"rv32 (qemu)" 48 140 440 1016 1000 1450

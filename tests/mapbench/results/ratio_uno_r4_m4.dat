@@ -1,0 +1,7 @@
+# dataset avg_bytes fnv/leveldb tsip32/leveldb sip13/leveldb
+"int32 (4B)" 4 0.893 1.823 6.505
+"words (6B)" 6 1.013 1.725 6.056
+"int64 (8B)" 8 1.244 1.850 4.670
+"headers (14B)" 14 1.450 1.776 4.941
+"long40 (39B)" 39 2.293 1.943 4.505
+"big128 (128B)" 128 2.847 2.055 3.382
